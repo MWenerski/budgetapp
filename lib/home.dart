@@ -30,7 +30,7 @@ class Home extends StatelessWidget {
                 ),
                 child: Text(
                   generateMessage(),
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
                 ),
               ),
             ),
