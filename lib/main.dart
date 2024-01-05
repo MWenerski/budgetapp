@@ -1,77 +1,98 @@
-
 import 'package:flutter/material.dart';
-import 'Expense.dart';
-import 'Income.dart';
-import 'buttons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'home.dart'; // Import your home page file
+
 void main() {
-  runApp(Home());
+  runApp(MyApp());
 }
 
-class Home extends StatelessWidget {
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-        ),
-        body: MyHomePage(),
+      home: FutureBuilder(
+        // Check if it's the first launch by checking if 'firstLaunch' is null in SharedPreferences
+        future: SharedPreferences.getInstance(),
+        builder: (context, AsyncSnapshot<SharedPreferences> snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            SharedPreferences prefs = snapshot.data!;
+            bool firstLaunch = prefs.getBool('firstLaunch') ?? true;
+
+            if (firstLaunch) {
+              // If it's the first launch, show the setup page
+              return ProfileSetup();
+            } else {
+              // If it's not the first launch, fetch the user's name and go to the home page
+              String userName = prefs.getString('name') ?? 'Default Name';
+              return Home(userName: userName);
+            }
+          }
+          return CircularProgressIndicator(); // Loading indicator while checking
+        },
       ),
     );
   }
 }
 
-class MyHomePage extends StatelessWidget {
+// ignore: must_be_immutable
+class ProfileSetup extends StatelessWidget {
+  TextEditingController nameController = TextEditingController();
+  String selectedCurrency = 'GBP'; // Default currency
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        SizedBox(height: 36), // Spacer to create vertical space
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Profile Setup'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            ExpenseButton(),
-            Buttons.homeButton(context),
-            IncomeButton(),
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(labelText: 'Name'),
+            ),
+            SizedBox(height: 16),
+            DropdownButton<String>(
+              value: selectedCurrency,
+              onChanged: (String? value) {
+                // Update the selected currency
+                if (value != null) {
+                  selectedCurrency = value;
+                }
+              },
+              items: ['GBP', 'USD', 'EUR', 'JPY', 'CAD', 'AUD'] // Add more currencies as needed
+                  .map<DropdownMenuItem<String>>(
+                    (String value) => DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    ),
+                  )
+                  .toList(),
+            ),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () async {
+                // Save the user's information to SharedPreferences
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+                prefs.setBool('firstLaunch', false);
+                prefs.setString('name', nameController.text);
+                prefs.setString('currency', selectedCurrency);
+
+                // Redirect to the home page
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Home(userName: nameController.text),
+                  ),
+                );
+              },
+              child: Text('Save and Continue'),
+            ),
           ],
         ),
-      ],
-    );
-  }
-}
-class IncomeButton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 112,
-      height: 72,
-      child: ElevatedButton(
-        onPressed: () {
-          Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => Income()), 
-            );
-        },
-        child: Text('Income'),
-      ),
-    );
-  }
-}
-class ExpenseButton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 112,
-      height: 72,
-      child: ElevatedButton(
-        onPressed: () {
-         Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => Expense()), 
-            );
-        },
-        child: Text('Expense'),
       ),
     );
   }
