@@ -1,6 +1,7 @@
+import 'package:budgetapp/globals.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'home.dart'; // Import your home page file
+import 'home.dart';
 
 void main() {
   runApp(MyApp());
@@ -24,6 +25,7 @@ class MyApp extends StatelessWidget {
             } else {
               // If it's not the first launch, fetch the user's name and go to the home page
               String userName = prefs.getString('name') ?? 'Default Name';
+             
               return Home(userName: userName);
             }
           }
@@ -43,8 +45,10 @@ class ProfileSetup extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.black,
         title: Text('Profile Setup'),
       ),
+      backgroundColor: Colors.black, // Set the background color of the entire page
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -73,24 +77,23 @@ class ProfileSetup extends StatelessWidget {
                   .toList(),
             ),
             SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () async {
-                // Save the user's information to SharedPreferences
-                SharedPreferences prefs = await SharedPreferences.getInstance();
-                prefs.setBool('firstLaunch', false);
-                prefs.setString('name', nameController.text);
-                prefs.setString('currency', selectedCurrency);
+           ElevatedButton(
+  onPressed: () async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setBool('firstLaunch', false);
+    prefs.setString('name', nameController.text);
+    prefs.setString('currency', selectedCurrency);
+    initializeUserGlobals(nameController.text, selectedCurrency);
 
-                // Redirect to the home page
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => Home(userName: nameController.text),
-                  ),
-                );
-              },
-              child: Text('Save and Continue'),
-            ),
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Home(userName: nameController.text),
+      ),
+    );
+  },
+  child: Text('Save and Continue'),
+),
           ],
         ),
       ),

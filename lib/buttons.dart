@@ -89,8 +89,8 @@ static Widget expenseButton(BuildContext context) {
   }
 
  
-static Widget profileButton(BuildContext context, String userName) {
-    String userInitial = userName.isNotEmpty ? userName[0].toUpperCase() : '';
+static Widget profileButton(BuildContext context, String globalUserName) {
+    String initial = globalUserName.isNotEmpty ? globalUserName[0] : '?';
 
     return ElevatedButton(
       onPressed: () {
@@ -106,11 +106,10 @@ static Widget profileButton(BuildContext context, String userName) {
       child: Container(
         height: 72.0,
         width: 72.0,
-        child: Center(
-          child: Text(
-            userInitial,
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
+        alignment: Alignment.center,
+        child: Text(
+          initial,
+          style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
         ),
       ),
     );

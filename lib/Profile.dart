@@ -1,22 +1,22 @@
-
 import 'package:budgetapp/home.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'globals.dart' as globals;
 
 class Profile extends StatefulWidget {
   @override
- 
-  _ProfileSetupState createState() => _ProfileSetupState();
+  _ProfileState createState() => _ProfileState();
 }
 
-class _ProfileSetupState extends State<Profile> {
+class _ProfileState extends State<Profile> {
   TextEditingController nameController = TextEditingController();
-  String selectedCurrency = 'GBP'; 
+  String selectedCurrency = 'GBP';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+         backgroundColor: Colors.black,
         title: Text('Profile Setup'),
       ),
       body: Padding(
@@ -48,9 +48,11 @@ class _ProfileSetupState extends State<Profile> {
             ElevatedButton(
               onPressed: () {
                 saveUserData();
+                globals.initializeUserGlobals(nameController.text, selectedCurrency);
+
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => Home(userName: '',)),
+                  MaterialPageRoute(builder: (context) => Home(userName: nameController.text)),
                 );
               },
               child: Text('Save and Continue'),

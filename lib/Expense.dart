@@ -1,5 +1,3 @@
-// ignore_for_file: file_names
-
 import 'package:flutter/material.dart';
 import 'buttons.dart';
 
@@ -9,8 +7,9 @@ class Expense extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Expense Page'),
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.black,
       ),
+      backgroundColor: Colors.black, 
       body: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -19,8 +18,6 @@ class Expense extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              
-              
               Buttons.homeButton(context),
             ],
           ),
