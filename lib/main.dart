@@ -12,7 +12,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: FutureBuilder(
-        // Check if it's the first launch by checking if 'firstLaunch' is null in SharedPreferences
+        
         future: SharedPreferences.getInstance(),
         builder: (context, AsyncSnapshot<SharedPreferences> snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
@@ -20,16 +20,16 @@ class MyApp extends StatelessWidget {
             bool firstLaunch = prefs.getBool('firstLaunch') ?? true;
 
             if (firstLaunch) {
-              // If it's the first launch, show the setup page
+             
               return ProfileSetup();
             } else {
-              // If it's not the first launch, fetch the user's name and go to the home page
+              
               String userName = prefs.getString('name') ?? 'Default Name';
              
               return Home(userName: userName);
             }
           }
-          return CircularProgressIndicator(); // Loading indicator while checking
+          return CircularProgressIndicator(); 
         },
       ),
     );
@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
 // ignore: must_be_immutable
 class ProfileSetup extends StatelessWidget {
   TextEditingController nameController = TextEditingController();
-  String selectedCurrency = 'GBP'; // Default currency
+  String selectedCurrency = 'GBP'; 
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +48,7 @@ class ProfileSetup extends StatelessWidget {
         backgroundColor: Colors.black,
         title: Text('Profile Setup'),
       ),
-      backgroundColor: Colors.black, // Set the background color of the entire page
+      backgroundColor: Colors.black, 
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -62,12 +62,12 @@ class ProfileSetup extends StatelessWidget {
             DropdownButton<String>(
               value: selectedCurrency,
               onChanged: (String? value) {
-                // Update the selected currency
+               
                 if (value != null) {
                   selectedCurrency = value;
                 }
               },
-              items: ['GBP', 'USD', 'EUR', 'JPY', 'CAD', 'AUD'] // Add more currencies as needed
+              items: ['GBP', 'USD', 'EUR', 'JPY', 'CAD', 'AUD'] 
                   .map<DropdownMenuItem<String>>(
                     (String value) => DropdownMenuItem<String>(
                       value: value,
