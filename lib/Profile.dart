@@ -14,7 +14,9 @@ class _ProfileState extends State<Profile> {
 
   @override
   Widget build(BuildContext context) {
+    
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
          backgroundColor: Colors.black,
         title: Text('Profile Setup'),

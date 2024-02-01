@@ -85,12 +85,7 @@ class ProfileSetup extends StatelessWidget {
     prefs.setString('currency', selectedCurrency);
     initializeUserGlobals(nameController.text, selectedCurrency);
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Home(userName: nameController.text),
-      ),
-    );
+   
   },
   child: Text('Save and Continue'),
 ),

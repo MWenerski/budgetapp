@@ -1,6 +1,6 @@
-import 'package:budgetapp/Expense.dart';
-import 'package:budgetapp/Income.dart';
-import 'package:budgetapp/Profile.dart';
+import 'package:budgetapp/expense.dart';
+import 'package:budgetapp/income.dart';
+import 'package:budgetapp/profile.dart';
 import 'package:budgetapp/home.dart';
 import 'package:flutter/material.dart';
 class Buttons {
