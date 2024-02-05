@@ -1,3 +1,3 @@
-# budgetapp
+# Budget and Expense tracking app
 
-A new Flutter project.
+A mobile application developed in Dart with the use of Flutter in VSCode
