@@ -1,14 +1,17 @@
 
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'buttons.dart';
 import 'globals.dart';
+import 'auth.dart';
 
 
 
 
-void main() {
-  
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await AuthHandler().initDatabase();
   runApp(MyApp());
 }
 
@@ -21,40 +24,59 @@ class MyApp extends StatelessWidget {
   }
 }
 
+
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+
+
 class LoginWidget extends StatefulWidget {
   @override
-  _LoginWidgetState createState() => _LoginWidgetState();
+  LoginWidgetState createState() => LoginWidgetState();
 }
 
-class _LoginWidgetState extends State<LoginWidget> {
-  final TextEditingController usernameController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  bool keepLoggedIn = false;
+class LoginWidgetState extends State<LoginWidget> {
+    
+    TextEditingController usernameController = TextEditingController();
+    TextEditingController passwordController = TextEditingController();
+    bool keepLoggedIn = false;
+  
 
-  _saveKeepLoggedInState(bool value) async {
+
+  saveKeepLoggedInState(bool value) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setBool('keepLoggedIn', value);
   }
 
-  void _login(BuildContext context) {
-    // Replace this with your actual authentication logic
-    // For now, navigate to the Home screen
-    Navigator.push(context, MaterialPageRoute(builder: (context) => Home()));
+  void login(BuildContext context) async{
+    String username = usernameController.text;
+    String password = passwordController.text;
+    print(AuthHandler().fetchEntries());
+   
+    bool isAuthed = await AuthHandler().authenticateUser(username, password);
+    if((username  != ""|| password != "") & isAuthed){
+      // ignore: use_build_context_synchronously
+      Navigator.push(context, MaterialPageRoute(builder: (context) => Home()));
+    }
+    
   }
 
-  void _register(BuildContext context) {
-    // Replace this with your actual registration logic
-    // For now, show a popup notification
+  void register(BuildContext context) async{
+    String username = usernameController.text;
+    String password = passwordController.text;
+    BuildContext localContext = context;
+    await AuthHandler().registerUser(username, password);
+    // ignore: use_build_context_synchronously
     showDialog(
-      context: context,
-      builder: (BuildContext context) {
+      context: localContext,
+      builder: (BuildContext localContext) {
         return AlertDialog(
           title: Text('Registration Successful'),
           content: Text('You have successfully registered!'),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(localContext).pop();
               },
               child: Text('OK'),
             ),
@@ -115,7 +137,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                     onChanged: (value) {
                       setState(() {
                         keepLoggedIn = value!;
-                        _saveKeepLoggedInState(keepLoggedIn);
+                        saveKeepLoggedInState(keepLoggedIn);
                       });
                     },
                   ),
@@ -127,12 +149,12 @@ class _LoginWidgetState extends State<LoginWidget> {
               ),
               SizedBox(height: 20.0),
               ElevatedButton(
-                onPressed: () => _login(context),
+                onPressed: () => login(context),
                 child: Text('Login'),
               ),
               SizedBox(height: 10.0),
               ElevatedButton(
-                onPressed: () => _register(context),
+                onPressed:() => register(context),
                 child: Text('Register'),
               ),
             ],
@@ -142,6 +164,11 @@ class _LoginWidgetState extends State<LoginWidget> {
     );
   }
 }
+
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+
 class Income extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -169,6 +196,14 @@ class Expense extends StatelessWidget {
     );
   }
 }
+
+
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
 
 class Home extends StatelessWidget {
   @override
@@ -237,3 +272,18 @@ class Home extends StatelessWidget {
     }
   }
 }
+
+
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+///
+///
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+///
+///
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
