@@ -1,8 +1,7 @@
-import 'package:budgetapp/expense.dart';
-import 'package:budgetapp/income.dart';
+
 import 'package:budgetapp/profile.dart';
-import 'package:budgetapp/home.dart';
 import 'package:flutter/material.dart';
+import 'main.dart';
 class Buttons {
   static Widget homeButton(BuildContext context) {
     return ElevatedButton(
@@ -10,7 +9,7 @@ class Buttons {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => Home(userName: '',)), 
+          MaterialPageRoute(builder: (context) => Home()), 
         );
       },
       style: ElevatedButton.styleFrom(

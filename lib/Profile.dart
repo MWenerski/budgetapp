@@ -1,25 +1,35 @@
-import 'package:budgetapp/home.dart';
+
+import 'package:budgetapp/main.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'globals.dart' as globals;
 
+
 class Profile extends StatefulWidget {
   @override
-  _ProfileState createState() => _ProfileState();
+  ProfileState createState() => ProfileState();
 }
 
-class _ProfileState extends State<Profile> {
+class ProfileState extends State<Profile> {
   TextEditingController nameController = TextEditingController();
   String selectedCurrency = 'GBP';
 
   @override
   Widget build(BuildContext context) {
-    
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-         backgroundColor: Colors.black,
+        backgroundColor: Colors.black,
         title: Text('Profile Setup'),
+        actions: [
+          IconButton(
+            onPressed: () {
+              // Call the logout function when the Logout button is pressed
+              logout();
+            },
+            icon: Icon(Icons.logout),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -54,7 +64,7 @@ class _ProfileState extends State<Profile> {
 
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => Home(userName: nameController.text)),
+                  MaterialPageRoute(builder: (context) => Home()),
                 );
               },
               child: Text('Save and Continue'),
@@ -70,5 +80,15 @@ class _ProfileState extends State<Profile> {
 
     prefs.setString('name', nameController.text);
     prefs.setString('currency', selectedCurrency);
+  }
+
+  // Function to handle user logout
+  void logout() {
+    // You may want to add additional logic for logging out, clearing user data, etc.
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LoginWidget()),
+    );
   }
 }
