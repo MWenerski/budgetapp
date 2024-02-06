@@ -3,7 +3,7 @@ library user.globals;
 
 String globalUserName = '';
 String globalCurrency = 'GBP'; 
-
+int globalUser = 0;
 
 void resetUserGlobals() {
   globalUserName = '';

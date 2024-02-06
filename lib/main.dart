@@ -1,10 +1,12 @@
+// ignore_for_file: use_build_context_synchronously
 
-
+import 'package:budgetapp/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'buttons.dart';
 import 'globals.dart';
 import 'auth.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 
 
@@ -19,7 +21,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-     home: LoginWidget(),
+     home: Home(),
     );
   }
 }
@@ -36,12 +38,10 @@ class LoginWidget extends StatefulWidget {
 }
 
 class LoginWidgetState extends State<LoginWidget> {
-    
+
     TextEditingController usernameController = TextEditingController();
     TextEditingController passwordController = TextEditingController();
     bool keepLoggedIn = false;
-  
-
 
   saveKeepLoggedInState(bool value) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -51,14 +51,11 @@ class LoginWidgetState extends State<LoginWidget> {
   void login(BuildContext context) async{
     String username = usernameController.text;
     String password = passwordController.text;
-    print(AuthHandler().fetchEntries());
-   
     bool isAuthed = await AuthHandler().authenticateUser(username, password);
     if((username  != ""|| password != "") & isAuthed){
-      // ignore: use_build_context_synchronously
+      globalUser = await AuthHandler().fetchID(username);
       Navigator.push(context, MaterialPageRoute(builder: (context) => Home()));
     }
-    
   }
 
   void register(BuildContext context) async{
@@ -66,7 +63,8 @@ class LoginWidgetState extends State<LoginWidget> {
     String password = passwordController.text;
     BuildContext localContext = context;
     await AuthHandler().registerUser(username, password);
-    // ignore: use_build_context_synchronously
+    bool usernameAvailable = await AuthHandler().usernameNotTaken(username);
+    if((username  != ""|| password != "")&& (usernameAvailable )){
     showDialog(
       context: localContext,
       builder: (BuildContext localContext) {
@@ -76,14 +74,35 @@ class LoginWidgetState extends State<LoginWidget> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(localContext).pop();
+                 Navigator.push(context, MaterialPageRoute(builder: (context) => Profile()));
               },
-              child: Text('OK'),
+              child: Text('Log In'),
             ),
           ],
         );
       },
     );
+  } else if(!usernameAvailable){
+       Fluttertoast.showToast(
+      msg: 'This Username is already taken',
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 4,
+      backgroundColor: Color(0xFF283B41),
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+  }else {
+      Fluttertoast.showToast(
+      msg: 'Username/Password cannot be empty',
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 4,
+      backgroundColor: Color(0xFF283B41),
+      textColor: Colors.white,
+      fontSize: 16.0,
+      );
+  }
   }
 
   @override
@@ -176,8 +195,16 @@ class Income extends StatelessWidget {
       appBar: AppBar(
         title: Text('Income Page'),
       ),
-      body: Center(
-        child: Text('This is the Income Page'),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Center(
+              child: Text('This is the Income Page'),
+            ),
+          ),
+          Buttons.homeButton(context)
+        ],
       ),
     );
   }
@@ -190,8 +217,16 @@ class Expense extends StatelessWidget {
       appBar: AppBar(
         title: Text('Expense Page'),
       ),
-      body: Center(
-        child: Text('This is the Expense Page'),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Center(
+              child: Text('This is the Expense Page'),
+            ),
+          ),
+          Buttons.homeButton(context)
+        ],
       ),
     );
   }

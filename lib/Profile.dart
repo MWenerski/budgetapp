@@ -1,4 +1,4 @@
-
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:budgetapp/main.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,7 +24,7 @@ class ProfileState extends State<Profile> {
         actions: [
           IconButton(
             onPressed: () {
-              // Call the logout function when the Logout button is pressed
+              
               logout();
             },
             icon: Icon(Icons.logout),
@@ -59,13 +59,27 @@ class ProfileState extends State<Profile> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                saveUserData();
+                if(nameController.text == ""){
+                  Fluttertoast.showToast(
+                  msg: 'Display Name cannot be empty',
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.BOTTOM,
+                  timeInSecForIosWeb: 4,
+                  backgroundColor: Color(0xFF283B41),
+                  textColor: Colors.white,
+                  fontSize: 16.0,
+              );
+
+                }else{
+                  saveUserData();
                 globals.initializeUserGlobals(nameController.text, selectedCurrency);
 
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => Home()),
-                );
+                ); 
+              }
+               
               },
               child: Text('Save and Continue'),
             ),

@@ -14,18 +14,18 @@ class AuthHandler {
   String databasePath = "lib/DB/login.db";
   late Database _database;
 
-  Future<void> initDatabase() async {
-    _database = await openDatabase(databasePath, version: 1,
-        onCreate: (Database db, int version) async {
-      await db.execute('''
-          CREATE TABLE users (
-            id INTEGER PRIMARY KEY,
-            username TEXT,
-            password TEXT
-          )
-        ''');
-    });
-  }
+Future<void> initDatabase() async {
+  _database = await openDatabase(databasePath, version: 1,
+      onCreate: (Database db, int version) async {
+    await db.execute('''
+      CREATE TABLE users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL,
+        password TEXT NOT NULL
+      )
+    ''');
+  });
+}
 
   Future<List<Map<String, dynamic>>> fetchEntries() async {
     try {
@@ -75,7 +75,7 @@ class AuthHandler {
             await BCrypt.checkpw(password, storedHashedPassword);
         return isPasswordCorrect;
       } else {
-        return false; // User not found
+        return false; 
       }
     } catch (e) {
       print('Error authenticating user: $e');
@@ -125,6 +125,55 @@ class AuthHandler {
       print('Error clearing database: $e');
     }
   }
+
+Future<int> fetchID(String name) async {
+  try {
+    List<Map<String, dynamic>> results = await _database.query(
+      'users',
+      columns: ['id'],
+      where: 'username = ?',
+      whereArgs: [name],
+    );
+
+    if (results.isNotEmpty) {
+      dynamic idValue = results.first['id'];
+
+      if (idValue != null) {
+        int? num = int.tryParse(idValue.toString());
+
+        if (num != null) {
+          print(num);
+          return num;
+        } else {
+          throw Exception('Invalid or non-numeric ID found for $name');
+        }
+      } else {
+        throw Exception('Null ID found for $name');
+      }
+    } else {
+      throw Exception('No ID found for $name');
+    }
+  } catch (e) {
+    throw e;
+  }
+}
+
+Future<bool> usernameNotTaken(String username) async {
+  try {
+    List<Map<String, dynamic>> results = await _database.query(
+      'users',
+      where: 'username = ?',
+      whereArgs: [username],
+    );
+
+    return results.isNotEmpty;
+  } catch (e) {
+    // Handle any errors that may occur during the database query
+    print('Error checking username existence: $e');
+    return false;
+  }
+}
+
 }
 
 
