@@ -1,3 +1,5 @@
+import 'package:budgetapp/auth.dart';
+import 'package:budgetapp/globals.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:budgetapp/main.dart';
 import 'package:flutter/material.dart';
@@ -19,12 +21,12 @@ class ProfileState extends State<Profile> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.black,
         title: Text('Profile Setup'),
         actions: [
           IconButton(
             onPressed: () {
-              
               logout();
             },
             icon: Icon(Icons.logout),
@@ -68,11 +70,12 @@ class ProfileState extends State<Profile> {
                   backgroundColor: Color(0xFF283B41),
                   textColor: Colors.white,
                   fontSize: 16.0,
-              );
+                   );
 
                 }else{
                   saveUserData();
-                globals.initializeUserGlobals(nameController.text, selectedCurrency);
+                  globals.initializeUserGlobals(nameController.text, selectedCurrency);
+                  AuthHandler().setDisplayName(nameController.text,globalUserName);
 
                 Navigator.pushReplacement(
                   context,
@@ -95,11 +98,8 @@ class ProfileState extends State<Profile> {
     prefs.setString('name', nameController.text);
     prefs.setString('currency', selectedCurrency);
   }
-
-  // Function to handle user logout
   void logout() {
-    // You may want to add additional logic for logging out, clearing user data, etc.
-
+    globals.resetUserGlobals();
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => LoginWidget()),

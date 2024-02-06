@@ -1,4 +1,5 @@
 // ignore_for_file: use_build_context_synchronously
+import 'dart:ui';
 
 import 'package:budgetapp/profile.dart';
 import 'package:flutter/material.dart';
@@ -8,20 +9,21 @@ import 'globals.dart';
 import 'auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-
-
-
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await AuthHandler().initDatabase();
-  runApp(MyApp());
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool loggedIn = prefs.getBool('stayLoggedIn') ?? false;
+  runApp(MyApp(loggedIn));
 }
 
 class MyApp extends StatelessWidget {
-  @override
+  final bool RememberLogin;
+  MyApp(this.RememberLogin);
+
   Widget build(BuildContext context) {
     return MaterialApp(
-     home: Home(),
+     home: RememberLogin ? Home() : LoginWidget(),
     );
   }
 }
@@ -41,20 +43,25 @@ class LoginWidgetState extends State<LoginWidget> {
 
     TextEditingController usernameController = TextEditingController();
     TextEditingController passwordController = TextEditingController();
-    bool keepLoggedIn = false;
+    bool RememberLogin = false;
 
-  saveKeepLoggedInState(bool value) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setBool('keepLoggedIn', value);
-  }
+
 
   void login(BuildContext context) async{
     String username = usernameController.text;
     String password = passwordController.text;
     bool isAuthed = await AuthHandler().authenticateUser(username, password);
     if((username  != ""|| password != "") & isAuthed){
+      if(RememberLogin){
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        prefs.setInt('ID',await AuthHandler().fetchID(username));
+        prefs.setBool('stayLoggedIn', true);
+      }
       globalUser = await AuthHandler().fetchID(username);
+      DisplayName = (await AuthHandler().fetchDisplayName(username));
+      loggedIn = true;
       Navigator.push(context, MaterialPageRoute(builder: (context) => Home()));
+
     }
   }
 
@@ -73,7 +80,13 @@ class LoginWidgetState extends State<LoginWidget> {
           content: Text('You have successfully registered!'),
           actions: [
             TextButton(
-              onPressed: () {
+              onPressed: () async {
+                loggedIn = true;
+                if(RememberLogin = true){
+                  SharedPreferences prefs = await SharedPreferences.getInstance();
+                  prefs.setInt('ID',await AuthHandler().fetchID(username));
+                    prefs.setBool('stayLoggedIn', true);
+                }
                  Navigator.push(context, MaterialPageRoute(builder: (context) => Profile()));
               },
               child: Text('Log In'),
@@ -152,11 +165,13 @@ class LoginWidgetState extends State<LoginWidget> {
               Row(
                 children: [
                   Checkbox(
-                    value: keepLoggedIn,
+                    value: RememberLogin,
                     onChanged: (value) {
                       setState(() {
-                        keepLoggedIn = value!;
-                        saveKeepLoggedInState(keepLoggedIn);
+                        print(value);
+                        RememberLogin = value!;
+                        print(value);
+                        
                       });
                     },
                   ),
@@ -193,6 +208,7 @@ class Income extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text('Income Page'),
       ),
       body: Column(
@@ -215,6 +231,7 @@ class Expense extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text('Expense Page'),
       ),
       body: Column(
@@ -256,17 +273,29 @@ class Home extends StatelessWidget {
             Positioned(
               top: 16,
               left: 16,
-              child: Container(
-                padding: EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  color: Color(0xFF283B41),
-                  borderRadius: BorderRadius.circular(9.0),
-                ),
-                child: Text(
-                  generateMessage(),
-                  style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
-                ),
-              ),
+              child: FutureBuilder<String>(
+  future: generateMessage(),
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+     
+      return CircularProgressIndicator(); 
+    } else if (snapshot.hasError) {
+      return Text('Error: ${snapshot.error}');
+    } else {
+      return Container(
+        padding: EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          color: Color(0xFF283B41),
+          borderRadius: BorderRadius.circular(9.0),
+        ),
+        child: Text(
+          snapshot.data ?? '', 
+          style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
+        ),
+      );
+    }
+  },
+),
             ),
             Column(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -294,31 +323,66 @@ class Home extends StatelessWidget {
     );
   }
 
-  String generateMessage() {
-    DateTime now = DateTime.now();
-    int hour = now.hour;
-
-    if (hour < 12) {
-      return 'Good Morning, $globalUserName!';
-    } else if (hour < 17) {
-      return 'Good Afternoon, $globalUserName!';
-    } else {
-      return 'Good Evening, $globalUserName!';
-    }
+  Future<String> generateMessage() async {
+  DateTime now = DateTime.now();
+  int hour = now.hour;
+  String name = await fetchDisplayNameFromPrefs();
+  if (hour < 12) {
+    return 'Good Morning, $name!';
+  } else if (hour < 17) {
+    return 'Good Afternoon, $name!';
+  } else {
+    return 'Good Evening, $name!';
   }
+}
 }
 
 
-///////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////
-///
-///
-///////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////
-///
-///
-///////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////
+void stayLoggedIn() async{
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  if((prefs.getBool('stayLoggedIn') != null)){
+      bool i = prefs.getBool('stayLoggedIn') as bool;
+      
+    if((i == true)){
+     int? num = prefs.getInt('ID');
+     if(num != null ){updateInfo(num);}
+   }
+  }
+  
+  
+}
+
+void updateInfo(int ID) async{
+      String? temp1 = "";
+      temp1 = await AuthHandler().getUsernameById(ID);
+      if (temp1 != null){
+         globalUserName = temp1;
+      }
+
+      String? temp2 = "";
+      temp2 = await AuthHandler().getDisplayNameById(ID);
+      if (temp2 != null){
+        DisplayName  = temp2;
+      }
+       
+}
+Future<void> setDisplayNameInPrefs(String displayName) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('displayName', displayName);
+    print('Display Name set in SharedPreferences: $displayName');
+  }
+  Future<String> fetchDisplayNameFromPrefs() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? displayName = prefs.getString('name');
+    if (displayName != null) {
+      return displayName;
+    } else {
+      print('No Display Name found in SharedPreferences');
+      return "user";
+    }
+  }
+  Future<bool> checkStayLoggedIn() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool stayLoggedIn = prefs.getBool('stayLoggedIn') ?? false; 
+  return stayLoggedIn;
+}

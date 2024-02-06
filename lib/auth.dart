@@ -1,3 +1,5 @@
+
+
 import 'package:bcrypt/bcrypt.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -20,6 +22,7 @@ Future<void> initDatabase() async {
     await db.execute('''
       CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        displayname TEXT,
         username TEXT NOT NULL,
         password TEXT NOT NULL
       )
@@ -43,8 +46,8 @@ Future<void> initDatabase() async {
   Future<void> registerUser(String username, String password) async {
     try {
       
-      String salt = await BCrypt.gensalt();
-      String hashedPassword = await BCrypt.hashpw(password, salt);
+      String salt = BCrypt.gensalt();
+      String hashedPassword = BCrypt.hashpw(password, salt);
 
       await _database.insert(
         'users',
@@ -77,6 +80,7 @@ Future<void> initDatabase() async {
       } else {
         return false; 
       }
+
     } catch (e) {
       print('Error authenticating user: $e');
       return false;
@@ -145,13 +149,13 @@ Future<int> fetchID(String name) async {
           print(num);
           return num;
         } else {
-          throw Exception('Invalid or non-numeric ID found for $name');
+          throw Exception('Invalid Name or no ID assigned');
         }
       } else {
-        throw Exception('Null ID found for $name');
+        throw Exception('Null Name found for ID');
       }
     } else {
-      throw Exception('No ID found for $name');
+      throw Exception('No Name Found for ID');
     }
   } catch (e) {
     throw e;
@@ -168,11 +172,77 @@ Future<bool> usernameNotTaken(String username) async {
 
     return results.isNotEmpty;
   } catch (e) {
-    // Handle any errors that may occur during the database query
+   
     print('Error checking username existence: $e');
     return false;
   }
 }
+
+Future<String> fetchDisplayName(String name) async {
+  try {
+    List<Map<String, dynamic>> results = await _database.query(
+      'users',
+      columns: ['displayname'],
+      where: 'username = ?',
+      whereArgs: [name],
+    );
+
+    if (results.isNotEmpty) {
+      String? temp3 = results.first['displayname'];
+      if (temp3 != null) {
+        return temp3;
+      } else {
+        throw Exception('No display name assigned');
+      }
+    } else {
+      throw Exception('Invalid Name or no display name assigned');
+    }
+  } catch (e) {
+    
+    throw Exception('Error fetching display name: $e');
+  }
+}
+
+
+Future<void> setDisplayName(String username, String newValue) async {
+  await _database.update(
+    'users',
+    {'displayname': newValue},
+    where: 'username = ?',
+    whereArgs: [username],
+  );
+}
+Future<String?> getUsernameById(int userId) async {
+    List<Map<String, dynamic>> results = await _database.query(
+      'users',
+      columns: ['username'],
+      where: 'id = ?',
+      whereArgs: [userId],
+      
+    );
+
+    if (results.isNotEmpty) {
+      return results.first['username'] as String?;
+    } else {
+      return null;
+    }
+  }
+
+Future<String?> getDisplayNameById(int userId) async {
+    List<Map<String, dynamic>> results = await _database.query(
+      'users',
+      columns: ['displayname'],
+      where: 'id = ?',
+      whereArgs: [userId],
+      
+    );
+
+    if (results.isNotEmpty) {
+      return results.first['displayname'] as String?;
+    } else{
+      return null;
+    }
+  }
 
 }
 
