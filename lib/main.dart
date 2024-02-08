@@ -1,6 +1,4 @@
 // ignore_for_file: use_build_context_synchronously
-import 'dart:ui';
-
 import 'package:budgetapp/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -40,62 +38,65 @@ class LoginWidget extends StatefulWidget {
 }
 
 class LoginWidgetState extends State<LoginWidget> {
+  TextEditingController usernameController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
+  bool rememberLogin = false;
 
-    TextEditingController usernameController = TextEditingController();
-    TextEditingController passwordController = TextEditingController();
-    bool RememberLogin = false;
+  void login(BuildContext context) async {
+   String username = usernameController.text;
+String password = passwordController.text;
+bool isAuthed = await AuthHandler().authenticateUser(username, password);
 
-
-
-  void login(BuildContext context) async{
-    String username = usernameController.text;
-    String password = passwordController.text;
-    bool isAuthed = await AuthHandler().authenticateUser(username, password);
-    if((username  != ""|| password != "") & isAuthed){
-      if(RememberLogin){
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        prefs.setInt('ID',await AuthHandler().fetchID(username));
-        prefs.setBool('stayLoggedIn', true);
-      }
-      globalUser = await AuthHandler().fetchID(username);
-      DisplayName = (await AuthHandler().fetchDisplayName(username));
-      loggedIn = true;
-      Navigator.push(context, MaterialPageRoute(builder: (context) => Home()));
-
-    }
+if ((username.isNotEmpty || password.isNotEmpty) && isAuthed) {
+  int userID = await AuthHandler().fetchID(username); // Await the result of the future
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  
+  if (rememberLogin) {
+    prefs.setBool('stayLoggedIn', true);
+    prefs.setInt('ID', userID); // Store the user ID in SharedPreferences
+  } else {
+    prefs.remove('stayLoggedIn'); // Remove stayLoggedIn if not remembered
+    prefs.remove('ID'); // Remove ID from SharedPreferences
   }
 
-  void register(BuildContext context) async{
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (context) => Home()),
+  );
+}
+  }
+
+  void register(BuildContext context) async {
     String username = usernameController.text;
     String password = passwordController.text;
-    BuildContext localContext = context;
     await AuthHandler().registerUser(username, password);
     bool usernameAvailable = await AuthHandler().usernameNotTaken(username);
-    if((username  != ""|| password != "")&& (usernameAvailable )){
-    showDialog(
-      context: localContext,
-      builder: (BuildContext localContext) {
-        return AlertDialog(
-          title: Text('Registration Successful'),
-          content: Text('You have successfully registered!'),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                loggedIn = true;
-                if(RememberLogin = true){
-                  SharedPreferences prefs = await SharedPreferences.getInstance();
-                  prefs.setInt('ID',await AuthHandler().fetchID(username));
+    if (username.isNotEmpty && password.isNotEmpty && usernameAvailable) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Registration Successful'),
+            content: Text('You have successfully registered!'),
+            actions: [
+              TextButton(
+                onPressed: () async {
+                  if (rememberLogin) {
+                    SharedPreferences prefs = await SharedPreferences.getInstance();
                     prefs.setBool('stayLoggedIn', true);
-                }
-                 Navigator.push(context, MaterialPageRoute(builder: (context) => Profile()));
-              },
-              child: Text('Log In'),
-            ),
-          ],
-        );
-      },
-    );
-  } else if(!usernameAvailable){
+                  }
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => Profile()),
+                  );
+                },
+                child: Text('Log In'),
+              ),
+            ],
+          );
+        },
+      );
+     } else if(!usernameAvailable){
        Fluttertoast.showToast(
       msg: 'This Username is already taken',
       toastLength: Toast.LENGTH_SHORT,
@@ -165,13 +166,10 @@ class LoginWidgetState extends State<LoginWidget> {
               Row(
                 children: [
                   Checkbox(
-                    value: RememberLogin,
+                    value: rememberLogin,
                     onChanged: (value) {
                       setState(() {
-                        print(value);
-                        RememberLogin = value!;
-                        print(value);
-                        
+                        rememberLogin = value!;
                       });
                     },
                   ),
@@ -188,7 +186,7 @@ class LoginWidgetState extends State<LoginWidget> {
               ),
               SizedBox(height: 10.0),
               ElevatedButton(
-                onPressed:() => register(context),
+                onPressed: () => register(context),
                 child: Text('Register'),
               ),
             ],

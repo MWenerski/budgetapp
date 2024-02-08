@@ -1,7 +1,9 @@
 
 
 import 'package:bcrypt/bcrypt.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
+import 'globals.dart';
 
 
 class AuthHandler {
@@ -242,6 +244,13 @@ Future<String?> getDisplayNameById(int userId) async {
     } else{
       return null;
     }
+  }
+   Future<void> logout() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setBool('stayLoggedIn', false);
+    prefs.setInt('ID', 0);
+    resetUserGlobals();
+   
   }
 
 }

@@ -98,8 +98,8 @@ class ProfileState extends State<Profile> {
     prefs.setString('name', nameController.text);
     prefs.setString('currency', selectedCurrency);
   }
-  void logout() {
-    globals.resetUserGlobals();
+  void logout(){
+    AuthHandler().logout();
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => LoginWidget()),
