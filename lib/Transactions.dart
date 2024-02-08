@@ -24,6 +24,7 @@ class TransactionsDB {
           CREATE TABLE $tableName(
             transactionID INTEGER PRIMARY KEY AUTOINCREMENT,
             transactionType TEXT,
+            transactionAmount DOUBLE,
             recurring INTEGER,
             dateTime TEXT,
             category TEXT,
@@ -50,6 +51,7 @@ class TransactionsDB {
       return Transaction(
         transactionID: maps[i]['transactionID'],
         transactionType: maps[i]['transactionType'],
+        transactionAmount: maps[i]['transactionAmount'], 
         recurring: maps[i]['recurring'] == 1,
         dateTime: DateTime.parse(maps[i]['dateTime']),
         category: maps[i]['category'],
@@ -69,6 +71,7 @@ class TransactionsDB {
       return Transaction(
         transactionID: maps[i]['transactionID'],
         transactionType: maps[i]['transactionType'],
+        transactionAmount: maps[i]['transactionAmount'], 
         recurring: maps[i]['recurring'] == 1,
         dateTime: DateTime.parse(maps[i]['dateTime']),
         category: maps[i]['category'],
@@ -81,6 +84,7 @@ class TransactionsDB {
 class Transaction {
   final int? transactionID;
   final String transactionType;
+  final double transactionAmount; 
   final bool recurring;
   final DateTime dateTime;
   final String category;
@@ -89,6 +93,7 @@ class Transaction {
   Transaction({
     this.transactionID,
     required this.transactionType,
+    required this.transactionAmount,
     required this.recurring,
     required this.dateTime,
     required this.category,
@@ -98,6 +103,7 @@ class Transaction {
   Map<String, dynamic> toMap() {
     return {
       'transactionType': transactionType,
+      'transactionAmount': transactionAmount, 
       'recurring': recurring ? 1 : 0,
       'dateTime': dateTime.toIso8601String(),
       'category': category,

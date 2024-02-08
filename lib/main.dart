@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, must_be_immutable
 import 'package:budgetapp/Transactions.dart' as BudgetTransactions;
 import 'package:budgetapp/profile.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +8,8 @@ import 'buttons.dart';
 import 'globals.dart';
 import 'auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:path/path.dart' as path;
+import 'package:intl/intl.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -205,30 +207,200 @@ if ((username.isNotEmpty || password.isNotEmpty) && isAuthed) {
 ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////
 
+
+
+
 class Income extends StatelessWidget {
+  final TextEditingController transactionAmountController = TextEditingController();
+  final TextEditingController categoryController = TextEditingController();
+  final TextEditingController descriptionController = TextEditingController();
+  bool recurringValue = false; 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black, // Set background color to black
       appBar: AppBar(
-        automaticallyImplyLeading: false,
+        backgroundColor: Colors.black, // Set app bar background color to black
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+             Navigator.pushReplacement(
+             context,
+             MaterialPageRoute(builder: (context) => Home()), 
+        );
+          },
+        ),
         title: Text('Income Page'),
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Center(
-              child: Text('This is the Income Page'),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: transactionAmountController,
+              decoration: InputDecoration(
+                labelText: 'Transaction Amount',
+                labelStyle: TextStyle(color: Colors.white), // Set label text color
+                border: OutlineInputBorder(), // Add border for text field
+                enabledBorder: OutlineInputBorder( // Style border when enabled
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+              ),
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
+              style: TextStyle(color: Colors.white), // Set text color
             ),
-          ),
-          Buttons.homeButton(context)
-        ],
+            SizedBox(height: 16),
+            Row(
+              children: [
+                Text(
+                  'Recurring',
+                  style: TextStyle(color: Colors.white), // Set text color
+                ),
+                Checkbox(
+                  value: recurringValue,
+                  onChanged: (newValue) {
+                    if (newValue != null) {
+                      recurringValue = newValue;
+                    }
+                  },
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            DateTimePicker(
+              controller: descriptionController,
+              labelText: 'Date',
+            ),
+            TextField(
+              controller: categoryController,
+              decoration: InputDecoration(
+                labelText: 'Category',
+                labelStyle: TextStyle(color: Colors.white),
+                border: OutlineInputBorder(),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+              ),
+              style: TextStyle(color: Colors.white),
+            ),
+            TextField(
+              controller: descriptionController,
+              decoration: InputDecoration(
+                labelText: 'Description',
+                labelStyle: TextStyle(color: Colors.white),
+                border: OutlineInputBorder(),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+              ),
+              style: TextStyle(color: Colors.white),
+            ),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                _submitData(context);
+              },
+              child: Text('Submit'),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  void _submitData(BuildContext context) async {
+    final double transactionAmount = double.tryParse(transactionAmountController.text) ?? 0.0;
+    final String dateTime = descriptionController.text;
+    final String category = categoryController.text;
+    final String description = descriptionController.text;
+
+   final Database database = await BudgetTransactions.TransactionsDB.initDatabase(getUserID());
+
+    await database.insert(
+      tableName,
+      {
+        'transactionType': 'Expense',
+        'transactionAmount': transactionAmount,
+        'recurring': recurringValue ? 1 : 0, 
+        'dateTime': dateTime,
+        'category': category,
+        'description': description,
+      },
+    );
+
+    transactionAmountController.clear();
+    categoryController.clear();
+    descriptionController.clear();
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Data submitted successfully'),
+    ));
+  }
+  static const String tableName = 'transactions';
+}
+
+class DateTimePicker extends StatefulWidget {
+  final TextEditingController controller;
+  final String labelText;
+
+  const DateTimePicker({
+    Key? key,
+    required this.controller,
+    required this.labelText,
+  }) : super(key: key);
+
+  @override
+  DateTimePickerState createState() => DateTimePickerState();
+}
+
+class DateTimePickerState extends State<DateTimePicker> {
+  DateTime? selectedDate;
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+        widget.controller.text = DateFormat('yyyy-MM-dd').format(picked); 
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: widget.controller,
+      decoration: InputDecoration(
+        labelText: widget.labelText,
+        labelStyle: TextStyle(color: Colors.white),
+        border: OutlineInputBorder(),
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.white),
+        ),
+        suffixIcon: IconButton(
+          icon: Icon(Icons.calendar_today, color: Colors.white),
+          onPressed: () => _selectDate(context),
+        ),
+      ),
+      style: TextStyle(color: Colors.white),
     );
   }
 }
 
+
 class Expense extends StatelessWidget {
+  final TextEditingController transactionAmountController = TextEditingController();
+  final TextEditingController categoryController = TextEditingController();
+  final TextEditingController descriptionController = TextEditingController();
+  bool recurringValue = false; 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -236,20 +408,142 @@ class Expense extends StatelessWidget {
         automaticallyImplyLeading: false,
         title: Text('Expense Page'),
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Center(
-              child: Text('This is the Expense Page'),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: transactionAmountController,
+              decoration: InputDecoration(
+                labelText: 'Transaction Amount',
+              ),
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
             ),
-          ),
-          Buttons.homeButton(context)
-        ],
+            SizedBox(height: 16),
+            Row(
+              children: [
+                Text('Recurring'),
+                Checkbox(
+                  value: recurringValue,
+                  onChanged: (newValue) {
+                    if (newValue != null) {
+                      recurringValue = newValue;
+                    }
+                  },
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            DateTimePicker(
+              controller: descriptionController,
+              labelText: 'Date',
+            ),
+            TextField(
+              controller: categoryController,
+              decoration: InputDecoration(
+                labelText: 'Category',
+              ),
+            ),
+            TextField(
+              controller: descriptionController,
+              decoration: InputDecoration(
+                labelText: 'Description',
+              ),
+            ),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                _submitData(context);
+              },
+              child: Text('Submit'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _submitData(BuildContext context) async {
+    final double transactionAmount = double.tryParse(transactionAmountController.text) ?? 0.0;
+    final String dateTime = descriptionController.text;
+    final String category = categoryController.text;
+    final String description = descriptionController.text;
+
+    final Database database = await BudgetTransactions.TransactionsDB.initDatabase(getUserID());
+
+    await database.insert(
+      tableName,
+      {
+        'transactionType': 'Expense',
+        'transactionAmount': transactionAmount,
+        'recurring': recurringValue ? 1 : 0, 
+        'dateTime': dateTime,
+        'category': category,
+        'description': description,
+      },
+    );
+
+    transactionAmountController.clear();
+    categoryController.clear();
+    descriptionController.clear();
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Data submitted successfully'),
+    ));
+  }
+
+  static const String tableName = 'transactions';
+}
+
+// Custom DateTimePicker widget
+class _DateTimePicker extends StatefulWidget {
+  final TextEditingController controller;
+  final String labelText;
+
+  const _DateTimePicker({
+    Key? key,
+    required this.controller,
+    required this.labelText,
+  }) : super(key: key);
+
+  @override
+  DateTimePickerState createState() => DateTimePickerState();
+}
+
+class _DateTimePickerState extends State<DateTimePicker> {
+  DateTime? selectedDate;
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+        widget.controller.text = DateFormat('yyyy-MM-dd').format(picked); 
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: widget.controller,
+      decoration: InputDecoration(
+        labelText: widget.labelText,
+        suffixIcon: IconButton(
+          icon: Icon(Icons.calendar_today),
+          onPressed: () => _selectDate(context),
+        ),
       ),
     );
   }
 }
+
 
 
 ///////////////////////////////////////////////////////////////////
@@ -436,7 +730,7 @@ class Savings extends StatelessWidget {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue, // Change button color to blue
-                      onPrimary: Colors.white, // Change text color to white
+                      foregroundColor: Colors.white, // Change text color to white
                       elevation: 0, // Remove button elevation
                       shadowColor: Colors.transparent, // Remove button shadow
                       padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0), // Add padding to the button
@@ -489,6 +783,7 @@ class Savings extends StatelessWidget {
                               columns: [
                                 DataColumn(label: Text('Transaction ID')),
                                 DataColumn(label: Text('Type')),
+                                DataColumn(label: Text('Amount')),
                                 DataColumn(label: Text('Date/Time')),
                                 DataColumn(label: Text('Description')),
                               ],
@@ -496,6 +791,7 @@ class Savings extends StatelessWidget {
                                 return DataRow(cells: [
                                   DataCell(Text(transaction.transactionID.toString())),
                                   DataCell(Text(transaction.transactionType)),
+                                  DataCell(Text(transaction.transactionAmount.toString())),
                                   DataCell(Text(transaction.dateTime.toString())),
                                   DataCell(Text(transaction.description)),
                                 ]);
