@@ -1,7 +1,9 @@
 // ignore_for_file: use_build_context_synchronously
+import 'package:budgetapp/Transactions.dart' as BudgetTransactions;
 import 'package:budgetapp/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart';
 import 'buttons.dart';
 import 'globals.dart';
 import 'auth.dart';
@@ -42,23 +44,25 @@ class LoginWidgetState extends State<LoginWidget> {
   TextEditingController passwordController = TextEditingController();
   bool rememberLogin = false;
 
-  void login(BuildContext context) async {
-   String username = usernameController.text;
+void login(BuildContext context) async {
+String username = usernameController.text;
 String password = passwordController.text;
 bool isAuthed = await AuthHandler().authenticateUser(username, password);
 
 if ((username.isNotEmpty || password.isNotEmpty) && isAuthed) {
-  int userID = await AuthHandler().fetchID(username); // Await the result of the future
+  int userID = await AuthHandler().fetchID(username); 
   SharedPreferences prefs = await SharedPreferences.getInstance();
   
   if (rememberLogin) {
     prefs.setBool('stayLoggedIn', true);
-    prefs.setInt('ID', userID); // Store the user ID in SharedPreferences
+    prefs.setInt('ID', userID);
+    
   } else {
-    prefs.remove('stayLoggedIn'); // Remove stayLoggedIn if not remembered
-    prefs.remove('ID'); // Remove ID from SharedPreferences
+    prefs.remove('stayLoggedIn'); 
+    prefs.remove('ID'); 
   }
-
+  globalUser = userID;
+  BudgetTransactions.TransactionsDB.initDatabase(userID);
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(builder: (context) => Home()),
@@ -267,74 +271,94 @@ class Home extends StatelessWidget {
           backgroundColor: Colors.transparent,
         ),
         body: Stack(
-          children: [
-            Positioned(
-              top: 16,
-              left: 16,
-              child: FutureBuilder<String>(
-  future: generateMessage(),
-  builder: (context, snapshot) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
-     
-      return CircularProgressIndicator(); 
-    } else if (snapshot.hasError) {
-      return Text('Error: ${snapshot.error}');
-    } else {
-      return Container(
-        padding: EdgeInsets.all(16.0),
+  children: [
+    Positioned(
+      top: 16,
+      left: 16,
+      child: FutureBuilder<String>(
+        future: generateMessage(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return CircularProgressIndicator();
+          } else if (snapshot.hasError) {
+            return Text('Error: ${snapshot.error}');
+          } else {
+            return Container(
+              padding: EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: Color(0xFF283B41),
+                borderRadius: BorderRadius.circular(9.0),
+              ),
+              child: Text(
+                snapshot.data ?? '',
+                style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
+              ),
+            );
+          }
+        },
+      ),
+    ),
+    Positioned(
+      top: 90, // Adjusted position of the white box
+      bottom: 168, // Adjusted position of the white box
+      left: 8,
+      right: 8,
+      child: Container(
+        padding: EdgeInsets.all(9.0),
         decoration: BoxDecoration(
-          color: Color(0xFF283B41),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(9.0),
         ),
-        child: Text(
-          snapshot.data ?? '', 
-          style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
-        ),
-      );
-    }
-  },
-),
-            ),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                SizedBox(height: 36),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Buttons.expenseButton(context),
-                    Buttons.homeButton(context),
-                    Buttons.incomeButton(context),
-                  ],
-                ),
-              ],
-            ),
-            Positioned(
-              top: 0,
-              right: 0,
-              child: Buttons.profileButton(context, globalUserName),
-            ),
+      ),
+    ),
+    Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SizedBox(height: 12), 
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Buttons.budgetButton(context, globalBudget),
+            Buttons.savingsButton(context, globalSavings),
           ],
         ),
+        SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Buttons.expenseButton(context),
+            Buttons.homeButton(context),
+            Buttons.incomeButton(context),
+          ],
+        ),
+      ],
+    ),
+    Positioned(
+      top: 0,
+      right: 0,
+      child: Buttons.profileButton(context, globalUserName),
+    ),
+  ],
+),
+
       ),
     );
   }
 
   Future<String> generateMessage() async {
-  DateTime now = DateTime.now();
-  int hour = now.hour;
-  String name = await fetchDisplayNameFromPrefs();
-  if (hour < 12) {
-    return 'Good Morning, $name!';
-  } else if (hour < 17) {
-    return 'Good Afternoon, $name!';
-  } else {
-    return 'Good Evening, $name!';
+    DateTime now = DateTime.now();
+    int hour = now.hour;
+    String name = await fetchDisplayNameFromPrefs();
+    if (hour < 12) {
+      return 'Good Morning, $name!';
+    } else if (hour < 17) {
+      return 'Good Afternoon, $name!';
+    } else {
+      return 'Good Evening, $name!';
+    }
   }
 }
-}
-
 
 void stayLoggedIn() async{
   SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -383,4 +407,122 @@ Future<void> setDisplayNameInPrefs(String displayName) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   bool stayLoggedIn = prefs.getBool('stayLoggedIn') ?? false; 
   return stayLoggedIn;
+}
+
+class Savings extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: Text('Enter New Savings Goal'),
+                            // Add your form here to change the savings goal
+                          );
+                        },
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue, // Change button color to blue
+                      onPrimary: Colors.white, // Change text color to white
+                      elevation: 0, // Remove button elevation
+                      shadowColor: Colors.transparent, // Remove button shadow
+                      padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0), // Add padding to the button
+                    ),
+                    child: Text(
+                      'Change Savings Goal',
+                      style: TextStyle(
+                        fontSize: 20.0, // Increase text size
+                      ),
+                    ),
+                  ),
+                ),
+                FutureBuilder<List<BudgetTransactions.Transaction>>(
+                  future: BudgetTransactions.TransactionsDB.getSavingsTransactions(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    } else if (snapshot.hasError) {
+                      return Center(
+                        child: Text('Error: ${snapshot.error}'),
+                      );
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(height: 20.0),
+                            Text(
+                              'No savings transactions found.',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      );
+                    } else {
+                      return Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(height: 10.0),
+                            Text(
+                              'Savings Transactions',
+                              style: TextStyle(color: Colors.white, fontSize: 24.0, fontWeight: FontWeight.bold),
+                            ),
+                            SizedBox(height: 10.0),
+                            DataTable(
+                              columns: [
+                                DataColumn(label: Text('Transaction ID')),
+                                DataColumn(label: Text('Type')),
+                                DataColumn(label: Text('Date/Time')),
+                                DataColumn(label: Text('Description')),
+                              ],
+                              rows: snapshot.data!.map<DataRow>((transaction) {
+                                return DataRow(cells: [
+                                  DataCell(Text(transaction.transactionID.toString())),
+                                  DataCell(Text(transaction.transactionType)),
+                                  DataCell(Text(transaction.dateTime.toString())),
+                                  DataCell(Text(transaction.description)),
+                                ]);
+                              }).toList(),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+     floatingActionButton: Padding(
+        padding: const EdgeInsets.all(2.0),
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: Center(
+            child: Buttons.homeButton(context),
+          ),
+        ),
+    )
+    );
+    
+    
+  }
 }

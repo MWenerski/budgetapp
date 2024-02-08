@@ -4,6 +4,8 @@ String DisplayName = "";
 String globalUserName = '';
 String globalCurrency = 'GBP'; 
 int globalUser = 0;
+double globalBudget = 0.00;
+double globalSavings = 0.00;
 bool loggedIn = false;
 bool remainLoggedIn = false;
 

@@ -39,6 +39,7 @@ class ProfileState extends State<Profile> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             TextField(
+              style: TextStyle(color: Colors.white),
               controller: nameController,
               decoration: InputDecoration(labelText: 'Name'),
             ),
