@@ -68,10 +68,20 @@ if ((username.isNotEmpty || password.isNotEmpty) && isAuthed) {
   }
   globalUser = userID;
   await transactionsDB.initDatabase(userID);
-  Navigator.pushReplacement(
+  if(prefs.getBool('$userID+log') != null ){
+    Navigator.pushReplacement(
     context,
     MaterialPageRoute(builder: (context) => Home()),
   );
+  }else{
+    prefs.setBool('$userID+log', true);
+    Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (context) => Profile()),
+    );
+  }
+
+ 
 }
   }
 
@@ -87,21 +97,7 @@ if ((username.isNotEmpty || password.isNotEmpty) && isAuthed) {
           return AlertDialog(
             title: Text('Registration Successful'),
             content: Text('You have successfully registered!'),
-            actions: [
-              TextButton(
-                onPressed: () async {
-                  if (rememberLogin) {
-                    SharedPreferences prefs = await SharedPreferences.getInstance();
-                    prefs.setBool('stayLoggedIn', true);
-                  }
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => Profile()),
-                  );
-                },
-                child: Text('Log In'),
-              ),
-            ],
+           
           );
         },
       );
@@ -211,18 +207,17 @@ if ((username.isNotEmpty || password.isNotEmpty) && isAuthed) {
 ///////////////////////////////////////////////////////////////////
 
 
-
-
-class Income extends StatefulWidget {
+class TransactionPage extends StatefulWidget {
   @override
-  _IncomeState createState() => _IncomeState();
+  _TransactionPageState createState() => _TransactionPageState();
 }
 
-class _IncomeState extends State<Income> {
+class _TransactionPageState extends State<TransactionPage> {
   final TextEditingController transactionAmountController = TextEditingController();
   final TextEditingController categoryController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   bool recurringValue = false;
+  String transactionType = 'Income';
 
   @override
   Widget build(BuildContext context) {
@@ -239,13 +234,28 @@ class _IncomeState extends State<Income> {
             );
           },
         ),
-        title: Text('Income Page', style: TextStyle(color: Colors.white)),
+        title: Text(transactionType == 'Income' ? 'Income Page' : 'Expense Page', style: TextStyle(color: Colors.white)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            DropdownButton<String>(
+              value: transactionType,
+              onChanged: (newValue) {
+                setState(() {
+                  transactionType = newValue!;
+                });
+              },
+              items: <String>['Income', 'Expense'].map<DropdownMenuItem<String>>((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+            ),
+            SizedBox(height: 16),
             _buildTextField(
               labelText: 'Transaction Amount',
               controller: transactionAmountController,
@@ -262,7 +272,7 @@ class _IncomeState extends State<Income> {
             _buildTextField(
               labelText: 'Category',
               controller: categoryController,
-              suffixText: 'Savings',
+              suffixText: transactionType == 'Income' ? 'Savings' : null,
             ),
             _buildTextField(
               labelText: 'Description',
@@ -329,15 +339,13 @@ class _IncomeState extends State<Income> {
     final String category = categoryController.text.toLowerCase() == 'savings' ? 'Savings' : categoryController.text;
     final String description = descriptionController.text;
 
-
-
     BudgetTransactions.TransactionsDB transactionsDB = BudgetTransactions.TransactionsDB();
     Database database = await transactionsDB.getDatabase(globalUser);
 
     await database.insert(
       'Transactions',
       {
-        'transactionType': 'Income',
+        'transactionType': transactionType,
         'transactionAmount': formattedAmount,
         'recurring': recurringValue ? 1 : 0,
         'dateTime': dateTime,
@@ -355,108 +363,6 @@ class _IncomeState extends State<Income> {
     ));
   }
 }
-class Expense extends StatelessWidget {
-  final TextEditingController transactionAmountController = TextEditingController();
-  final TextEditingController categoryController = TextEditingController();
-  final TextEditingController descriptionController = TextEditingController();
-  bool recurringValue = false; 
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Text('Expense Page'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: transactionAmountController,
-              decoration: InputDecoration(
-                labelText: 'Transaction Amount',
-              ),
-              keyboardType: TextInputType.numberWithOptions(decimal: true),
-            ),
-            SizedBox(height: 16),
-            Row(
-              children: [
-                Text('Recurring'),
-                Checkbox(
-                  value: recurringValue,
-                  onChanged: (newValue) {
-                    if (newValue != null) {
-                      recurringValue = newValue;
-                    }
-                  },
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-            DateTimePicker(
-              controller: descriptionController,
-              labelText: 'Date',
-            ),
-            TextField(
-              controller: categoryController,
-              decoration: InputDecoration(
-                labelText: 'Category',
-              ),
-            ),
-            TextField(
-              controller: descriptionController,
-              decoration: InputDecoration(
-                labelText: 'Description',
-              ),
-            ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                _submitData(context);
-              },
-              child: Text('Submit'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _submitData(BuildContext context) async {
-    final double transactionAmount = double.tryParse(transactionAmountController.text) ?? 0.0;
-    final String dateTime = descriptionController.text;
-    final String category = categoryController.text;
-    final String description = descriptionController.text;
-    BudgetTransactions.TransactionsDB transactionsDB = BudgetTransactions.TransactionsDB();
-    Database database = await transactionsDB.getDatabase(globalUser);
-   
-
-    await database.insert(
-      tableName,
-      {
-        'transactionType': 'Expense',
-        'transactionAmount': transactionAmount,
-        'recurring': recurringValue ? 1 : 0, 
-        'dateTime': dateTime,
-        'category': category,
-        'description': description,
-      },
-    );
-
-    transactionAmountController.clear();
-    categoryController.clear();
-    descriptionController.clear();
-
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Data submitted successfully'),
-    ));
-  }
-
-  static const String tableName = 'Transactions';
-}
-
 
 class DateTimePicker extends StatefulWidget {
   final TextEditingController controller;
@@ -504,7 +410,6 @@ class _DateTimePickerState extends State<DateTimePicker> {
     );
   }
 }
-
 
 
 ///////////////////////////////////////////////////////////////////
@@ -583,9 +488,8 @@ class Home extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            Buttons.expenseButton(context),
             Buttons.homeButton(context),
-            Buttons.incomeButton(context),
+            Buttons.newTransactionButton(context),
           ],
         ),
       ],

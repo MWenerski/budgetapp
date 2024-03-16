@@ -22,7 +22,7 @@ class Buttons {
       ),
       child: SizedBox(
         height: 72.0,
-        width: 80.0,
+        width: 148.0,
         child: Center(
           child: Image.asset(
             'assets/house-black-silhouette-without-door.png',
@@ -34,12 +34,12 @@ class Buttons {
     );
   }
 
- static Widget incomeButton(BuildContext context) {
+ static Widget newTransactionButton(BuildContext context) {
     return ElevatedButton(
       onPressed: () {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => Income()), 
+          MaterialPageRoute(builder: (context) => TransactionPage()), 
         );
       },
       style: ElevatedButton.styleFrom(
@@ -50,7 +50,7 @@ class Buttons {
       ),
       child: SizedBox(
         height: 72.0,
-        width: 80.0,
+        width: 148.0,
         child: Center(
           child: Image.asset(
             'assets/income.png', 
@@ -61,33 +61,7 @@ class Buttons {
       ),
     );
   }
-static Widget expenseButton(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => Expense()), 
-        );
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Color(0xFF283B41), 
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(9.0), 
-        ),
-      ),
-      child: SizedBox(
-        height: 72.0,
-        width: 80.0,
-        child: Center(
-          child: Image.asset(
-            'assets/expenses.png', 
-            height: 40.0,
-            width: 40.0,
-          ),
-        ),
-      ),
-    );
-  }
+
 
  
 static Widget profileButton(BuildContext context, String globalUserName) {
