@@ -1,23 +1,21 @@
 import 'globals.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
 
 class TransactionsDB {
-  static Database? _database;
+  Database? _database;
 
-  static const String tableName = 'Transactions';
+  String tableName = 'Transactions';
 
-  static Future<Database> getDatabase(int userId) async {
+   Future<Database> getDatabase(int userId) async {
     if (_database != null) return _database!;
     _database = await initDatabase(userId);
     return _database!;
   }
 
-  static Future<Database> initDatabase(int userId) async {
+  Future<Database> initDatabase(int userId) async {
     String databasePath = "lib/DB/transactions_$userId.db";
-    String path = join(await getDatabasesPath(), databasePath);
     return await openDatabase(
-      path,
+      databasePath,
       version: 1,
       onCreate: (db, version) async {
         await db.execute('''
@@ -35,7 +33,7 @@ class TransactionsDB {
     );
   }
 
-  static Future<void> insertTransaction(Transaction transaction) async {
+  Future<void> insertTransaction(Transaction transaction) async {
     final Database db = await getDatabase(getUserID());
     await db.insert(
       tableName,
@@ -44,7 +42,7 @@ class TransactionsDB {
     );
   }
 
-  static Future<List<Transaction>> getTransactions() async {
+  Future<List<Transaction>> getTransactions() async {
     final Database db = await getDatabase(getUserID());
     final List<Map<String, dynamic>> maps = await db.query(tableName);
     return List.generate(maps.length, (i) {
@@ -60,26 +58,46 @@ class TransactionsDB {
     });
   }
 
-  static Future<List<Transaction>> getSavingsTransactions() async {
-    final Database db = await getDatabase(getUserID());
-    final List<Map<String, dynamic>> maps = await db.query(
-      tableName,
-      where: 'category = ?',
-      whereArgs: ['Savings'],
+  Future<List<Transaction>> getSavingsTransactions() async {
+  final Database db = await getDatabase(getUserID());
+  final List<Map<String, dynamic>> maps = await db.query(
+    tableName,
+    where: 'category = ?',
+    whereArgs: ['Savings'],
+  );
+  return List.generate(maps.length, (i) {
+    String dateTimeString = maps[i]['dateTime'];
+    DateTime dateTime;
+
+    // Convert the date string to the correct format
+    try {
+      List<String> parts = dateTimeString.split('-');
+      int year = int.parse(parts[0]);
+      int month = int.parse(parts[1]);
+      int day = int.parse(parts[2]);
+
+      // Construct DateTime object
+      dateTime = DateTime(year, month, day);
+    } catch (e) {
+      // Handle parsing errors if necessary
+      print('Error parsing date: $e');
+      // Set dateTime to a default value if parsing fails
+      dateTime = DateTime.now();
+    }
+
+    return Transaction(
+      transactionID: maps[i]['transactionID'],
+      transactionType: maps[i]['transactionType'],
+      transactionAmount: maps[i]['transactionAmount'], 
+      recurring: maps[i]['recurring'] == 1,
+      dateTime: dateTime,
+      category: maps[i]['category'],
+      description: maps[i]['description'],
     );
-    return List.generate(maps.length, (i) {
-      return Transaction(
-        transactionID: maps[i]['transactionID'],
-        transactionType: maps[i]['transactionType'],
-        transactionAmount: maps[i]['transactionAmount'], 
-        recurring: maps[i]['recurring'] == 1,
-        dateTime: DateTime.parse(maps[i]['dateTime']),
-        category: maps[i]['category'],
-        description: maps[i]['description'],
-      );
-    });
-  }
+  });
 }
+}
+
 
 class Transaction {
   final int? transactionID;
