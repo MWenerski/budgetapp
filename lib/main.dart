@@ -1,5 +1,5 @@
 // ignore_for_file: use_build_context_synchronously, must_be_immutable
-import 'package:budgetapp/Transactions.dart' as BudgetTransactions;
+import 'package:budgetapp/Transactions.dart' as budget_transactions;
 import 'package:budgetapp/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,9 +8,8 @@ import 'buttons.dart';
 import 'globals.dart';
 import 'auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:path/path.dart' as path;
 import 'package:intl/intl.dart';
-BudgetTransactions.TransactionsDB transactionsDB = BudgetTransactions.TransactionsDB();
+budget_transactions.TransactionsDB transactionsDB = budget_transactions.TransactionsDB();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -19,45 +18,32 @@ void main() async {
   bool loggedIn = prefs.getBool('stayLoggedIn') ?? false;
   runApp(MyApp(loggedIn));
 }
-
 class MyApp extends StatelessWidget {
-  late Future<List<BudgetTransactions.Transaction>> futureTransactions;
-  final bool RememberLogin;
-  MyApp(this.RememberLogin);
-
+  late Future<List<budget_transactions.Transaction>> futureTransactions;
+  final bool rememberLoginBool;
+  MyApp(this.rememberLoginBool);
+@override
   Widget build(BuildContext context) {
     return MaterialApp(
-     home: RememberLogin ? Home() : LoginWidget(),
+     home: rememberLoginBool ? Home() : LoginWidget(),
     );
   }
-  
 }
-
-
-///////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////
-
-
 class LoginWidget extends StatefulWidget {
   @override
   LoginWidgetState createState() => LoginWidgetState();
 }
-
 class LoginWidgetState extends State<LoginWidget> {
   TextEditingController usernameController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   bool rememberLogin = false;
-
-void login(BuildContext context) async {
+  void login(BuildContext context) async {
 String username = usernameController.text;
 String password = passwordController.text;
 bool isAuthed = await AuthHandler().authenticateUser(username, password);
-
 if ((username.isNotEmpty || password.isNotEmpty) && isAuthed) {
   int userID = await AuthHandler().fetchID(username); 
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  
   if (rememberLogin) {
     prefs.setBool('stayLoggedIn', true);
     prefs.setInt('ID', userID);
@@ -79,12 +65,9 @@ if ((username.isNotEmpty || password.isNotEmpty) && isAuthed) {
     context,
     MaterialPageRoute(builder: (context) => Profile()),
     );
+   }
   }
-
- 
-}
-  }
-
+ }
   void register(BuildContext context) async {
     String username = usernameController.text;
     String password = passwordController.text;
@@ -123,7 +106,6 @@ if ((username.isNotEmpty || password.isNotEmpty) && isAuthed) {
       );
   }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -199,26 +181,17 @@ if ((username.isNotEmpty || password.isNotEmpty) && isAuthed) {
         ),
       ),
     );
-  }
-}
-
-///////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////
-
-
+  }}
 class TransactionPage extends StatefulWidget {
   @override
-  _TransactionPageState createState() => _TransactionPageState();
+  TransactionPageState createState() => TransactionPageState();
 }
-
-class _TransactionPageState extends State<TransactionPage> {
+class TransactionPageState extends State<TransactionPage> {
   final TextEditingController transactionAmountController = TextEditingController();
   final TextEditingController categoryController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   bool recurringValue = false;
   String transactionType = 'Income';
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -288,7 +261,6 @@ class _TransactionPageState extends State<TransactionPage> {
       ),
     );
   }
-
   Widget _buildTextField({
     required String labelText,
     required TextEditingController controller,
@@ -310,7 +282,6 @@ class _TransactionPageState extends State<TransactionPage> {
       style: TextStyle(color: Colors.white),
     );
   }
-
   Widget _buildRecurringCheckbox() {
     return Row(
       children: [
@@ -331,7 +302,6 @@ class _TransactionPageState extends State<TransactionPage> {
       ],
     );
   }
-
   void _submitData() async {
     final double transactionAmount = double.tryParse(transactionAmountController.text) ?? 0.0;
     final String formattedAmount = transactionAmount.toStringAsFixed(2);
@@ -339,7 +309,7 @@ class _TransactionPageState extends State<TransactionPage> {
     final String category = categoryController.text.toLowerCase() == 'savings' ? 'Savings' : categoryController.text;
     final String description = descriptionController.text;
 
-    BudgetTransactions.TransactionsDB transactionsDB = BudgetTransactions.TransactionsDB();
+    budget_transactions.TransactionsDB transactionsDB = budget_transactions.TransactionsDB();
     Database database = await transactionsDB.getDatabase(globalUser);
 
     await database.insert(
@@ -361,9 +331,7 @@ class _TransactionPageState extends State<TransactionPage> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('Data submitted successfully', style: TextStyle(color: Colors.white)),
     ));
-  }
-}
-
+  }}
 class DateTimePicker extends StatefulWidget {
   final TextEditingController controller;
   final String labelText;
@@ -375,12 +343,10 @@ class DateTimePicker extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _DateTimePickerState createState() => _DateTimePickerState();
+  DateTimePickerState createState() => DateTimePickerState();
 }
-
-class _DateTimePickerState extends State<DateTimePicker> {
+class DateTimePickerState extends State<DateTimePicker> {
   DateTime? selectedDate;
-
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -410,17 +376,7 @@ class _DateTimePickerState extends State<DateTimePicker> {
     );
   }
 }
-
-
-///////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////
-
 class Home extends StatelessWidget {
-  
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -519,22 +475,17 @@ class Home extends StatelessWidget {
     }
   }
 }
-
-void stayLoggedIn() async{
+  void stayLoggedIn() async{
   SharedPreferences prefs = await SharedPreferences.getInstance();
   if((prefs.getBool('stayLoggedIn') != null)){
       bool i = prefs.getBool('stayLoggedIn') as bool;
-      
     if((i == true)){
      int? num = prefs.getInt('ID');
      if(num != null ){updateInfo(num);}
    }
   }
-  
-  
 }
-
-void updateInfo(int ID) async{
+  void updateInfo(int ID) async{
       String? temp1 = "";
       temp1 = await AuthHandler().getUsernameById(ID);
       if (temp1 != null){
@@ -545,10 +496,9 @@ void updateInfo(int ID) async{
       temp2 = await AuthHandler().getDisplayNameById(ID);
       if (temp2 != null){
         DisplayName  = temp2;
-      }
-       
+      }   
 }
-Future<void> setDisplayNameInPrefs(String displayName) async {
+  Future<void> setDisplayNameInPrefs(String displayName) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('displayName', displayName);
     print('Display Name set in SharedPreferences: $displayName');
