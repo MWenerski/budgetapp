@@ -192,8 +192,7 @@ class TransactionPage extends StatefulWidget {
 }
 
 class TransactionPageState extends State<TransactionPage> {
-  final TextEditingController transactionAmountController =
-      TextEditingController();
+  final TextEditingController transactionAmountController =TextEditingController();
   final TextEditingController categoryController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   bool recurringValue = false;
@@ -466,7 +465,7 @@ class Home extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Buttons.homeButton(context),
+                    
                     Buttons.newTransactionButton(context),
                   ],
                 ),

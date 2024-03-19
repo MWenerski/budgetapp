@@ -48,7 +48,7 @@ class Buttons {
       ),
       child: SizedBox(
         height: 72.0,
-        width: 148.0,
+        width: 350,
         child: Center(
           child: Image.asset(
             'assets/income.png',
