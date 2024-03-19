@@ -1,5 +1,7 @@
+import 'package:budgetapp/globals.dart';
 import 'package:budgetapp/settings.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'main.dart';
 import 'savings.dart';
 
@@ -60,8 +62,10 @@ class Buttons {
     );
   }
 
-  static Widget profileButton(BuildContext context, String displayName) {
-    String initial = displayName.isNotEmpty ? displayName[0] : '?';
+  static Widget profileButton(BuildContext context) {
+    
+    String name = displayName;
+    String initial = name.isNotEmpty ? name[0] : '?';
 
     return ElevatedButton(
       onPressed: () {

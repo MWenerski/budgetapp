@@ -62,7 +62,7 @@ class ProfileState extends State<Profile> {
                 if (Validator().validateUserInput(nameController.text, 'Display Name')) {
                   saveUserData();
                   initializeUserGlobals(nameController.text, selectedCurrency);
-                  AuthHandler().setDisplayName(globalUserName, nameController.text);
+                  displayName = nameController.text;
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => Home()),

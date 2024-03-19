@@ -397,6 +397,7 @@ class DateTimePickerState extends State<DateTimePicker> {
 }
 
 class Home extends StatelessWidget {
+  
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -474,7 +475,7 @@ class Home extends StatelessWidget {
             Positioned(
               top: 0,
               right: 0,
-              child: Buttons.profileButton(context, displayName),
+              child: Buttons.profileButton(context),
             ),
           ],
         ),
