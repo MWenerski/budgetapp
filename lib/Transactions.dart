@@ -69,11 +69,46 @@ class TransactionsDB {
       String dateTimeString = maps[i]['dateTime'];
       DateTime dateTime;
 
+
+    
+ main
       try {
         List<String> parts = dateTimeString.split('-');
         int year = int.parse(parts[0]);
         int month = int.parse(parts[1]);
         int day = int.parse(parts[2]);
+
+
+     
+        dateTime = DateTime(year, month, day);
+      } catch (e) {
+
+        print('Error parsing date: $e');
+
+        dateTime = DateTime.now();
+      }
+
+      return Transaction(
+        transactionID: maps[i]['transactionID'],
+        transactionType: maps[i]['transactionType'],
+        transactionAmount: maps[i]['transactionAmount'],
+        recurring: maps[i]['recurring'] == 1,
+        dateTime: dateTime,
+        category: maps[i]['category'],
+        description: maps[i]['description'],
+      );
+    });
+  }
+Future<void> deleteTransactions() async {
+  final Database db = await getDatabase(getUserID());
+  await db.delete(
+    tableName,
+    where: '1', 
+  );
+}
+  
+}
+
 
         dateTime = DateTime(year, month, day);
       } catch (e) {
@@ -95,6 +130,7 @@ class TransactionsDB {
   }
 }
 
+ main
 class Transaction {
   final int? transactionID;
   final String transactionType;

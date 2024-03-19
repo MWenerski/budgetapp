@@ -1,11 +1,9 @@
 import 'package:budgetapp/auth.dart';
 import 'package:budgetapp/globals.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:budgetapp/main.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'globals.dart' as globals;
-
 
 class Profile extends StatefulWidget {
   @override
@@ -21,17 +19,8 @@ class ProfileState extends State<Profile> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        automaticallyImplyLeading: false,
         backgroundColor: Colors.black,
-        title: Text('Profile Setup'),
-        actions: [
-          IconButton(
-            onPressed: () {
-              logout();
-            },
-            icon: Icon(Icons.logout),
-          ),
-        ],
+        title: Text(''),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -51,8 +40,17 @@ class ProfileState extends State<Profile> {
                   selectedCurrency = value ?? 'GBP';
                 });
               },
-              items: ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CNY', 'INR', 'BRL']
-                  .map((String currency) {
+              items: [
+                'USD',
+                'EUR',
+                'GBP',
+                'JPY',
+                'CAD',
+                'AUD',
+                'CNY',
+                'INR',
+                'BRL'
+              ].map((String currency) {
                 return DropdownMenuItem<String>(
                   value: currency,
                   child: Text(currency),
@@ -62,28 +60,23 @@ class ProfileState extends State<Profile> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                if(nameController.text == ""){
-                  Fluttertoast.showToast(
-                  msg: 'Display Name cannot be empty',
-                  toastLength: Toast.LENGTH_SHORT,
-                  gravity: ToastGravity.BOTTOM,
-                  timeInSecForIosWeb: 4,
-                  backgroundColor: Color(0xFF283B41),
-                  textColor: Colors.white,
-                  fontSize: 16.0,
-                   );
-
-                }else{
+                if (Validator()
+                    .validateUserInput(nameController.text, 'Display Name')) {
                   saveUserData();
-                  globals.initializeUserGlobals(nameController.text, selectedCurrency);
-                  AuthHandler().setDisplayName(nameController.text,globalUserName);
-
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => Home()),
-                ); 
-              }
-               
+                  globals.initializeUserGlobals(
+                      nameController.text, selectedCurrency);
+                  AuthHandler()
+                      .setDisplayName(nameController.text, displayName);
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => Home()),
+                  );
+                } else {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => Home()),
+                  );
+                }
               },
               child: Text('Save and Continue'),
             ),
@@ -98,12 +91,5 @@ class ProfileState extends State<Profile> {
 
     prefs.setString('name', nameController.text);
     prefs.setString('currency', selectedCurrency);
-  }
-  void logout(){
-    AuthHandler().logout();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => LoginWidget()),
-    );
   }
 }

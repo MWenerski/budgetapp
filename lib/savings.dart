@@ -10,7 +10,8 @@ class Savings extends StatefulWidget {
 
 class _SavingsState extends State<Savings> {
   late Future<List<BudgetTransactions.Transaction>> futureTransactions;
-  final BudgetTransactions.TransactionsDB transactionsDB = BudgetTransactions.TransactionsDB();
+  final BudgetTransactions.TransactionsDB transactionsDB =
+      BudgetTransactions.TransactionsDB();
 
   @override
   void initState() {
@@ -34,7 +35,10 @@ class _SavingsState extends State<Savings> {
           ),
           Text(
             '$globalCurrency $globalSavings',
-            style: TextStyle(color: Colors.white, fontSize: 28.0, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: 28.0,
+                fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 20.0),
           ElevatedButton(
@@ -64,7 +68,8 @@ class _SavingsState extends State<Savings> {
           SizedBox(height: 20.0),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(left: 12.0, right: 12.0, bottom: 100.0),
+              padding:
+                  const EdgeInsets.only(left: 12.0, right: 12.0, bottom: 100.0),
               child: ClipRRect(
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(9.0),
@@ -98,22 +103,38 @@ class _SavingsState extends State<Savings> {
                           ),
                         );
                       } else {
-                        snapshot.data!.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+                        snapshot.data!
+                            .sort((a, b) => b.dateTime.compareTo(a.dateTime));
                         return SingleChildScrollView(
                           child: DataTable(
                             columnSpacing: 10.0,
                             columns: [
-                              DataColumn(label: Text('Transaction ID', style: TextStyle(color: Colors.white))),
-                              DataColumn(label: Text('Amount', style: TextStyle(color: Colors.white))),
-                              DataColumn(label: Text('Date', style: TextStyle(color: Colors.white))),
-                              DataColumn(label: Text('Description', style: TextStyle(color: Colors.white))),
+                              DataColumn(
+                                  label: Text('Transaction ID',
+                                      style: TextStyle(color: Colors.white))),
+                              DataColumn(
+                                  label: Text('Amount',
+                                      style: TextStyle(color: Colors.white))),
+                              DataColumn(
+                                  label: Text('Date',
+                                      style: TextStyle(color: Colors.white))),
+                              DataColumn(
+                                  label: Text('Description',
+                                      style: TextStyle(color: Colors.white))),
                             ],
                             rows: snapshot.data!.map<DataRow>((transaction) {
                               return DataRow(cells: [
-                                DataCell(Text(transaction.transactionID.toString(), style: TextStyle(color: Colors.white))),
-                                DataCell(Text(transaction.transactionAmount.toStringAsFixed(2), style: TextStyle(color: Colors.white))),
-                                DataCell(Text(_formatDate(transaction.dateTime), style: TextStyle(color: Colors.white))),
-                                DataCell(Text(transaction.description, style: TextStyle(color: Colors.white))),
+                                DataCell(Text(
+                                    transaction.transactionID.toString(),
+                                    style: TextStyle(color: Colors.white))),
+                                DataCell(Text(
+                                    transaction.transactionAmount
+                                        .toStringAsFixed(2),
+                                    style: TextStyle(color: Colors.white))),
+                                DataCell(Text(_formatDate(transaction.dateTime),
+                                    style: TextStyle(color: Colors.white))),
+                                DataCell(Text(transaction.description,
+                                    style: TextStyle(color: Colors.white))),
                               ]);
                             }).toList(),
                           ),
