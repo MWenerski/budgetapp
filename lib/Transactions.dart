@@ -19,7 +19,7 @@ class TransactionsDB {
       version: 1,
       onCreate: (db, version) async {
         await db.execute('''
-          CREATE TABLE $tableName(
+          CREATE TABLE Transactions (
             transactionID INTEGER PRIMARY KEY AUTOINCREMENT,
             transactionType TEXT,
             transactionAmount DOUBLE,
@@ -51,7 +51,7 @@ class TransactionsDB {
         transactionType: maps[i]['transactionType'],
         transactionAmount: maps[i]['transactionAmount'],
         recurring: maps[i]['recurring'] == 1,
-        dateTime: DateTime.parse(maps[i]['dateTime']),
+        dateTime: maps[i]['dateTime'],
         category: maps[i]['category'],
         description: maps[i]['description'],
       );
@@ -66,44 +66,51 @@ class TransactionsDB {
       whereArgs: ['Savings'],
     );
     return List.generate(maps.length, (i) {
-      String dateTimeString = maps[i]['dateTime'];
-      DateTime dateTime;
-
-    
-      try {
-        List<String> parts = dateTimeString.split('-');
-        int year = int.parse(parts[0]);
-        int month = int.parse(parts[1]);
-        int day = int.parse(parts[2]);
-
-     
-        dateTime = DateTime(year, month, day);
-      } catch (e) {
-
-        print('Error parsing date: $e');
-
-        dateTime = DateTime.now();
-      }
-
       return Transaction(
         transactionID: maps[i]['transactionID'],
         transactionType: maps[i]['transactionType'],
         transactionAmount: maps[i]['transactionAmount'],
         recurring: maps[i]['recurring'] == 1,
-        dateTime: dateTime,
+        dateTime: maps[i]['dateTime'],
         category: maps[i]['category'],
         description: maps[i]['description'],
       );
     });
   }
-Future<void> deleteTransactions() async {
-  final Database db = await getDatabase(getUserID());
-  await db.delete(
-    tableName,
-    where: '1', 
-  );
-}
-  
+
+  Future<void> deleteTransactions() async {
+    final Database db = await getDatabase(getUserID());
+    await db.delete(
+      tableName,
+      where: '1',
+    );
+  }
+
+  Future<List<Transaction>> getTransactionsBetweenDates(
+      String startDate, String endDate) async {
+    try {
+      final db = await getDatabase(getUserID());
+      final List<Map<String, dynamic>> maps = await db.query(
+        tableName,
+        where: "dateTime BETWEEN ? AND ?",
+        whereArgs: [startDate, endDate],
+      );
+      return List.generate(maps.length, (i) {
+        return Transaction(
+          transactionID: maps[i]['transactionID'],
+          transactionType: maps[i]['transactionType'],
+          transactionAmount: maps[i]['transactionAmount'],
+          recurring: maps[i]['recurring'] == 1,
+          category: maps[i]['category'],
+          dateTime: maps[i]['dateTime'],
+          description: maps[i]['description'],
+        );
+      });
+    } catch (e) {
+      print("Error retrieving transactions between dates: $e");
+      return [];
+    }
+  }
 }
 
 class Transaction {
@@ -111,7 +118,7 @@ class Transaction {
   final String transactionType;
   final double transactionAmount;
   final bool recurring;
-  final DateTime dateTime;
+  final String dateTime; 
   final String category;
   final String description;
 
@@ -125,14 +132,28 @@ class Transaction {
     required this.description,
   });
 
+ 
   Map<String, dynamic> toMap() {
     return {
       'transactionType': transactionType,
       'transactionAmount': transactionAmount,
       'recurring': recurring ? 1 : 0,
-      'dateTime': dateTime.toIso8601String(),
+      'dateTime': dateTime, 
       'category': category,
       'description': description,
     };
+  }
+
+ 
+  factory Transaction.fromMap(Map<String, dynamic> map) {
+    return Transaction(
+      transactionID: map['transactionID'],
+      transactionType: map['transactionType'],
+      transactionAmount: map['transactionAmount'],
+      recurring: map['recurring'] == 1,
+      dateTime: map['dateTime'],
+      category: map['category'],
+      description: map['description'],
+    );
   }
 }

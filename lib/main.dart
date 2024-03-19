@@ -1,6 +1,8 @@
 // ignore_for_file: use_build_context_synchronously, must_be_immutable
 import 'package:budgetapp/Transactions.dart' as budget_transactions;
 import 'package:budgetapp/Profile.dart';
+import 'package:budgetapp/carousel.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
@@ -397,7 +399,6 @@ class DateTimePickerState extends State<DateTimePicker> {
 }
 
 class Home extends StatelessWidget {
-  
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -448,12 +449,15 @@ class Home extends StatelessWidget {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(9.0),
                 ),
+                child: PieChartWidget(),
               ),
             ),
             Column(
               mainAxisAlignment: MainAxisAlignment.end,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                SizedBox(height: 12),
+                CarouselWidget(), 
                 SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -466,7 +470,6 @@ class Home extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                   
                     Buttons.newTransactionButton(context),
                   ],
                 ),
@@ -498,35 +501,103 @@ class Home extends StatelessWidget {
   }
 }
 
-void stayLoggedIn() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  if ((prefs.getBool('stayLoggedIn') != null)) {
-    bool i = prefs.getBool('stayLoggedIn') as bool;
-    if ((i == true)) {
-      int? num = prefs.getInt('ID');
-      if (num != null) {
-        updateInfo(num);
-      }
-    }
-  }
+class PieChartWidget extends StatefulWidget {
+  @override
+  _PieChartWidgetState createState() => _PieChartWidgetState();
 }
 
-void updateInfo(int ID) async {
-  String? temp1 = "";
-  temp1 = await AuthHandler().getUsernameById(ID);
-  if (temp1 != null) {
-    globalUserName = temp1;
+class _PieChartWidgetState extends State<PieChartWidget> {
+  late Future<Map<String, double>> _categoryTotalsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateData();
   }
 
-  String? temp2 = "";
-  temp2 = await AuthHandler().getDisplayNameById(ID);
-  if (temp2 != null) {
-    displayName = temp2;
+  Future<void> _updateData() async {
+    TransactionAnalyzer analyzer = TransactionAnalyzer();
+    setState(() {
+      _categoryTotalsFuture = analyzer.getTransactionTotalsLast30Days();
+    });
   }
-}
 
-Future<void> setDisplayNameInPrefs(String displayName) async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  await prefs.setString('displayName', displayName);
-  print('Display Name set in SharedPreferences: $displayName');
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Map<String, double>>(
+      future: _categoryTotalsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(),
+          );
+        } else if (snapshot.hasError) {
+          return Center(
+            child: Text('Error: ${snapshot.error}'),
+          );
+        } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+          return _buildPieChart(snapshot.data!);
+        } else {
+          return _buildEmptyPieChart();
+        }
+      },
+    );
+  }
+
+  Widget _buildPieChart(Map<String, double> categoryTotals) {
+    return AspectRatio(
+      aspectRatio: 1.5,
+      child: PieChart(
+        PieChartData(
+          sections: _generatePieChartSections(categoryTotals),
+          centerSpaceRadius: 40,
+          sectionsSpace: 0,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyPieChart() {
+    return AspectRatio(
+      aspectRatio: 1.5,
+      child: PieChart(
+        PieChartData(
+          sections: [
+            PieChartSectionData(
+              color: Colors.grey,
+              value: 1.0,
+            ),
+          ],
+          centerSpaceRadius: 40,
+          sectionsSpace: 0,
+        ),
+      ),
+    );
+  }
+
+  List<PieChartSectionData> _generatePieChartSections(
+      Map<String, double> categoryTotals) {
+    List<PieChartSectionData> sections = [];
+    int index = 0;
+    categoryTotals.forEach((category, total) {
+      const double radius = 50;
+      const double titleFontSize = 14;
+
+      sections.add(
+        PieChartSectionData(
+          color: Colors.primaries[index % Colors.primaries.length],
+          value: total,
+          title: '$category\n\$$total',
+          radius: radius,
+          titleStyle: TextStyle(
+            fontSize: titleFontSize,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+      );
+      index++;
+    });
+    return sections;
+  }
 }

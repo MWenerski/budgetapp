@@ -1,7 +1,6 @@
 import 'package:budgetapp/globals.dart';
 import 'package:budgetapp/settings.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'main.dart';
 import 'savings.dart';
 

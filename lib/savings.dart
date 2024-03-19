@@ -131,7 +131,7 @@ class _SavingsState extends State<Savings> {
                                     transaction.transactionAmount
                                         .toStringAsFixed(2),
                                     style: TextStyle(color: Colors.white))),
-                                DataCell(Text(_formatDate(transaction.dateTime),
+                                DataCell(Text(transaction.dateTime,
                                     style: TextStyle(color: Colors.white))),
                                 DataCell(Text(transaction.description,
                                     style: TextStyle(color: Colors.white))),
@@ -154,9 +154,5 @@ class _SavingsState extends State<Savings> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
-  }
-
-  String _formatDate(DateTime dateTime) {
-    return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}';
   }
 }
