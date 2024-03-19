@@ -84,7 +84,6 @@ class ProfileState extends State<Profile> {
 
   Future<void> saveUserData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-
     prefs.setString('name', nameController.text);
     prefs.setString('currency', selectedCurrency);
   }

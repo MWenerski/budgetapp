@@ -483,15 +483,16 @@ class Home extends StatelessWidget {
   }
 
   Future<String> generateMessage() async {
-    String _displayname = await AuthHandler().fetchDisplayName(globalUserName);
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? displayname = prefs.getString('name');
     DateTime now = DateTime.now();
     int hour = now.hour;
     if (hour < 12) {
-      return 'Good Morning, $_displayname!';
+      return 'Good Morning, $displayname!';
     } else if (hour < 17) {
-      return 'Good Afternoon, $_displayname!';
+      return 'Good Afternoon, $displayname!';
     } else {
-      return 'Good Evening, $_displayname!';
+      return 'Good Evening, $displayname!';
     }
   }
 }
