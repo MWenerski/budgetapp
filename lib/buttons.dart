@@ -71,7 +71,7 @@ static Widget profileButton(BuildContext context, String globalUserName) {
       onPressed: () {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => Profile()),
+          MaterialPageRoute(builder: (context) => Settings()),
         );
       },
       style: ElevatedButton.styleFrom(

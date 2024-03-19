@@ -6,7 +6,7 @@ class TransactionsDB {
 
   String tableName = 'Transactions';
 
-   Future<Database> getDatabase(int userId) async {
+  Future<Database> getDatabase(int userId) async {
     if (_database != null) return _database!;
     _database = await initDatabase(userId);
     return _database!;
@@ -49,7 +49,7 @@ class TransactionsDB {
       return Transaction(
         transactionID: maps[i]['transactionID'],
         transactionType: maps[i]['transactionType'],
-        transactionAmount: maps[i]['transactionAmount'], 
+        transactionAmount: maps[i]['transactionAmount'],
         recurring: maps[i]['recurring'] == 1,
         dateTime: DateTime.parse(maps[i]['dateTime']),
         category: maps[i]['category'],
@@ -59,50 +59,46 @@ class TransactionsDB {
   }
 
   Future<List<Transaction>> getSavingsTransactions() async {
-  final Database db = await getDatabase(getUserID());
-  final List<Map<String, dynamic>> maps = await db.query(
-    tableName,
-    where: 'category = ?',
-    whereArgs: ['Savings'],
-  );
-  return List.generate(maps.length, (i) {
-    String dateTimeString = maps[i]['dateTime'];
-    DateTime dateTime;
-
-    // Convert the date string to the correct format
-    try {
-      List<String> parts = dateTimeString.split('-');
-      int year = int.parse(parts[0]);
-      int month = int.parse(parts[1]);
-      int day = int.parse(parts[2]);
-
-      // Construct DateTime object
-      dateTime = DateTime(year, month, day);
-    } catch (e) {
-      // Handle parsing errors if necessary
-      print('Error parsing date: $e');
-      // Set dateTime to a default value if parsing fails
-      dateTime = DateTime.now();
-    }
-
-    return Transaction(
-      transactionID: maps[i]['transactionID'],
-      transactionType: maps[i]['transactionType'],
-      transactionAmount: maps[i]['transactionAmount'], 
-      recurring: maps[i]['recurring'] == 1,
-      dateTime: dateTime,
-      category: maps[i]['category'],
-      description: maps[i]['description'],
+    final Database db = await getDatabase(getUserID());
+    final List<Map<String, dynamic>> maps = await db.query(
+      tableName,
+      where: 'category = ?',
+      whereArgs: ['Savings'],
     );
-  });
-}
-}
+    return List.generate(maps.length, (i) {
+      String dateTimeString = maps[i]['dateTime'];
+      DateTime dateTime;
 
+      try {
+        List<String> parts = dateTimeString.split('-');
+        int year = int.parse(parts[0]);
+        int month = int.parse(parts[1]);
+        int day = int.parse(parts[2]);
+
+        dateTime = DateTime(year, month, day);
+      } catch (e) {
+        print('Error parsing date: $e');
+
+        dateTime = DateTime.now();
+      }
+
+      return Transaction(
+        transactionID: maps[i]['transactionID'],
+        transactionType: maps[i]['transactionType'],
+        transactionAmount: maps[i]['transactionAmount'],
+        recurring: maps[i]['recurring'] == 1,
+        dateTime: dateTime,
+        category: maps[i]['category'],
+        description: maps[i]['description'],
+      );
+    });
+  }
+}
 
 class Transaction {
   final int? transactionID;
   final String transactionType;
-  final double transactionAmount; 
+  final double transactionAmount;
   final bool recurring;
   final DateTime dateTime;
   final String category;
@@ -121,7 +117,7 @@ class Transaction {
   Map<String, dynamic> toMap() {
     return {
       'transactionType': transactionType,
-      'transactionAmount': transactionAmount, 
+      'transactionAmount': transactionAmount,
       'recurring': recurring ? 1 : 0,
       'dateTime': dateTime.toIso8601String(),
       'category': category,
