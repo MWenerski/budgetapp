@@ -465,7 +465,7 @@ class Home extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    
+                   
                     Buttons.newTransactionButton(context),
                   ],
                 ),
@@ -483,14 +483,15 @@ class Home extends StatelessWidget {
   }
 
   Future<String> generateMessage() async {
+    String _displayname = await AuthHandler().fetchDisplayName(globalUserName);
     DateTime now = DateTime.now();
     int hour = now.hour;
     if (hour < 12) {
-      return 'Good Morning, $displayName!';
+      return 'Good Morning, $_displayname!';
     } else if (hour < 17) {
-      return 'Good Afternoon, $displayName!';
+      return 'Good Afternoon, $_displayname!';
     } else {
-      return 'Good Evening, $displayName!';
+      return 'Good Evening, $_displayname!';
     }
   }
 }

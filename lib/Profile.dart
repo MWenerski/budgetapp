@@ -3,7 +3,6 @@ import 'package:budgetapp/globals.dart';
 import 'package:budgetapp/main.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'globals.dart' as globals;
 
 class Profile extends StatefulWidget {
   @override
@@ -60,13 +59,10 @@ class ProfileState extends State<Profile> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                if (Validator()
-                    .validateUserInput(nameController.text, 'Display Name')) {
+                if (Validator().validateUserInput(nameController.text, 'Display Name')) {
                   saveUserData();
-                  globals.initializeUserGlobals(
-                      nameController.text, selectedCurrency);
-                  AuthHandler()
-                      .setDisplayName(nameController.text, displayName);
+                  initializeUserGlobals(nameController.text, selectedCurrency);
+                  AuthHandler().setDisplayName(globalUserName, nameController.text);
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => Home()),
