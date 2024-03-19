@@ -1,111 +1,113 @@
 // ignore_for_file: use_build_context_synchronously, must_be_immutable
 import 'package:budgetapp/Transactions.dart' as budget_transactions;
-import 'package:budgetapp/profile.dart';
+import 'package:budgetapp/Profile.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite/sqlite_api.dart';
 import 'buttons.dart';
 import 'globals.dart';
 import 'auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
-budget_transactions.TransactionsDB transactionsDB = budget_transactions.TransactionsDB();
+
+budget_transactions.TransactionsDB transactionsDB =
+    budget_transactions.TransactionsDB();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  await AuthHandler().initDatabase(); 
+  await AuthHandler().initDatabase();
   SharedPreferences prefs = await SharedPreferences.getInstance();
   bool loggedIn = prefs.getBool('stayLoggedIn') ?? false;
   runApp(MyApp(loggedIn));
 }
+
 class MyApp extends StatelessWidget {
-  late Future<List<budget_transactions.Transaction>> futureTransactions;
+  late Future<List<budget_transactions.TransactionsDB>> futureTransactions;
   final bool rememberLoginBool;
   MyApp(this.rememberLoginBool);
-@override
+  @override
   Widget build(BuildContext context) {
     return MaterialApp(
-     home: rememberLoginBool ? Home() : LoginWidget(),
+      home: rememberLoginBool ? Home() : LoginWidget(),
     );
   }
 }
+
 class LoginWidget extends StatefulWidget {
   @override
   LoginWidgetState createState() => LoginWidgetState();
 }
+
 class LoginWidgetState extends State<LoginWidget> {
   TextEditingController usernameController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   bool rememberLogin = false;
   void login(BuildContext context) async {
-String username = usernameController.text;
-String password = passwordController.text;
-bool isAuthed = await AuthHandler().authenticateUser(username, password);
-if ((username.isNotEmpty || password.isNotEmpty) && isAuthed) {
-  int userID = await AuthHandler().fetchID(username); 
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  if (rememberLogin) {
-    prefs.setBool('stayLoggedIn', true);
-    prefs.setInt('ID', userID);
-    
-  } else {
-    prefs.remove('stayLoggedIn'); 
-    prefs.remove('ID'); 
+    String username = usernameController.text;
+    String password = passwordController.text;
+    bool isAuthed = await AuthHandler().authenticateUser(username, password);
+    if ((username.isNotEmpty || password.isNotEmpty) && isAuthed) {
+      print('works');
+      int userID = await AuthHandler().fetchID(username);
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      if (rememberLogin) {
+        prefs.setBool('stayLoggedIn', true);
+        prefs.setInt('ID', userID);
+      } else {
+        prefs.remove('stayLoggedIn');
+        prefs.remove('ID');
+      }
+      globalUser = userID;
+      await transactionsDB.initDatabase(userID);
+      if (prefs.getBool('$userID+log') != null) {
+        print(globalUserName);
+        print(displayName);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => Home()),
+        );
+      } else {
+        prefs.setBool('$userID+log', true);
+        print(globalUserName);
+        print(displayName);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => Profile()),
+        );
+      }
+    }
   }
-  globalUser = userID;
-  await transactionsDB.initDatabase(userID);
-  if(prefs.getBool('$userID+log') != null ){
-    Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(builder: (context) => Home()),
-  );
-  }else{
-    prefs.setBool('$userID+log', true);
-    Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(builder: (context) => Profile()),
-    );
-   }
-  }
- }
+
   void register(BuildContext context) async {
     String username = usernameController.text;
     String password = passwordController.text;
-    await AuthHandler().registerUser(username, password);
-    bool usernameAvailable = await AuthHandler().usernameNotTaken(username);
-    if (username.isNotEmpty && password.isNotEmpty && usernameAvailable) {
+    bool usernameisTaken = await AuthHandler().usernameTaken(username);
+    bool userOK = Validator().validateUserInput(username, 'username');
+    bool passOK = Validator().validateUserPassword(password);
+    if (userOK && passOK && !usernameisTaken) {
+      await AuthHandler().registerUser(username, password);
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
             title: Text('Registration Successful'),
             content: Text('You have successfully registered!'),
-           
           );
         },
       );
-     } else if(!usernameAvailable){
-       Fluttertoast.showToast(
-      msg: 'This Username is already taken',
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-      timeInSecForIosWeb: 4,
-      backgroundColor: Color(0xFF283B41),
-      textColor: Colors.white,
-      fontSize: 16.0,
-    );
-  }else {
+    } else if (usernameisTaken) {
       Fluttertoast.showToast(
-      msg: 'Username/Password cannot be empty',
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-      timeInSecForIosWeb: 4,
-      backgroundColor: Color(0xFF283B41),
-      textColor: Colors.white,
-      fontSize: 16.0,
+        msg: 'This Username is already taken',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 4,
+        backgroundColor: Color(0xFF283B41),
+        textColor: Colors.white,
+        fontSize: 16.0,
       );
+    }
   }
-  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -181,13 +183,17 @@ if ((username.isNotEmpty || password.isNotEmpty) && isAuthed) {
         ),
       ),
     );
-  }}
+  }
+}
+
 class TransactionPage extends StatefulWidget {
   @override
   TransactionPageState createState() => TransactionPageState();
 }
+
 class TransactionPageState extends State<TransactionPage> {
-  final TextEditingController transactionAmountController = TextEditingController();
+  final TextEditingController transactionAmountController =
+      TextEditingController();
   final TextEditingController categoryController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   bool recurringValue = false;
@@ -207,7 +213,9 @@ class TransactionPageState extends State<TransactionPage> {
             );
           },
         ),
-        title: Text(transactionType == 'Income' ? 'Income Page' : 'Expense Page', style: TextStyle(color: Colors.white)),
+        title: Text(
+            transactionType == 'Income' ? 'Income Page' : 'Expense Page',
+            style: TextStyle(color: Colors.white)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -221,7 +229,8 @@ class TransactionPageState extends State<TransactionPage> {
                   transactionType = newValue!;
                 });
               },
-              items: <String>['Income', 'Expense'].map<DropdownMenuItem<String>>((String value) {
+              items: <String>['Income', 'Expense']
+                  .map<DropdownMenuItem<String>>((String value) {
                 return DropdownMenuItem<String>(
                   value: value,
                   child: Text(value),
@@ -261,6 +270,7 @@ class TransactionPageState extends State<TransactionPage> {
       ),
     );
   }
+
   Widget _buildTextField({
     required String labelText,
     required TextEditingController controller,
@@ -282,6 +292,7 @@ class TransactionPageState extends State<TransactionPage> {
       style: TextStyle(color: Colors.white),
     );
   }
+
   Widget _buildRecurringCheckbox() {
     return Row(
       children: [
@@ -302,14 +313,19 @@ class TransactionPageState extends State<TransactionPage> {
       ],
     );
   }
+
   void _submitData() async {
-    final double transactionAmount = double.tryParse(transactionAmountController.text) ?? 0.0;
+    final double transactionAmount =
+        double.tryParse(transactionAmountController.text) ?? 0.0;
     final String formattedAmount = transactionAmount.toStringAsFixed(2);
     final String dateTime = descriptionController.text;
-    final String category = categoryController.text.toLowerCase() == 'savings' ? 'Savings' : categoryController.text;
+    final String category = categoryController.text.toLowerCase() == 'savings'
+        ? 'Savings'
+        : categoryController.text;
     final String description = descriptionController.text;
 
-    budget_transactions.TransactionsDB transactionsDB = budget_transactions.TransactionsDB();
+    budget_transactions.TransactionsDB transactionsDB =
+        budget_transactions.TransactionsDB();
     Database database = await transactionsDB.getDatabase(globalUser);
 
     await database.insert(
@@ -329,9 +345,12 @@ class TransactionPageState extends State<TransactionPage> {
     descriptionController.clear();
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Data submitted successfully', style: TextStyle(color: Colors.white)),
+      content: Text('Data submitted successfully',
+          style: TextStyle(color: Colors.white)),
     ));
-  }}
+  }
+}
+
 class DateTimePicker extends StatefulWidget {
   final TextEditingController controller;
   final String labelText;
@@ -345,6 +364,7 @@ class DateTimePicker extends StatefulWidget {
   @override
   DateTimePickerState createState() => DateTimePickerState();
 }
+
 class DateTimePickerState extends State<DateTimePicker> {
   DateTime? selectedDate;
   Future<void> _selectDate(BuildContext context) async {
@@ -357,7 +377,7 @@ class DateTimePickerState extends State<DateTimePicker> {
     if (picked != null && picked != selectedDate) {
       setState(() {
         selectedDate = picked;
-        widget.controller.text = DateFormat('yyyy-MM-dd').format(picked); 
+        widget.controller.text = DateFormat('yyyy-MM-dd').format(picked);
       });
     }
   }
@@ -376,6 +396,7 @@ class DateTimePickerState extends State<DateTimePicker> {
     );
   }
 }
+
 class Home extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -388,76 +409,76 @@ class Home extends StatelessWidget {
           backgroundColor: Colors.transparent,
         ),
         body: Stack(
-  children: [
-    Positioned(
-      top: 16,
-      left: 16,
-      child: FutureBuilder<String>(
-        future: generateMessage(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return CircularProgressIndicator();
-          } else if (snapshot.hasError) {
-            return Text('Error: ${snapshot.error}');
-          } else {
-            return Container(
-              padding: EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Color(0xFF283B41),
-                borderRadius: BorderRadius.circular(9.0),
-              ),
-              child: Text(
-                snapshot.data ?? '',
-                style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
-              ),
-            );
-          }
-        },
-      ),
-    ),
-    Positioned(
-      top: 90,
-      bottom: 168, 
-      left: 8,
-      right: 8,
-      child: Container(
-        padding: EdgeInsets.all(9.0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(9.0),
-        ),
-      ),
-    ),
-    Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        SizedBox(height: 12), 
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            Buttons.budgetButton(context, globalBudget),
-            Buttons.savingsButton(context, globalSavings),
+            Positioned(
+              top: 16,
+              left: 16,
+              child: FutureBuilder<String>(
+                future: generateMessage(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return CircularProgressIndicator();
+                  } else if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}');
+                  } else {
+                    return Container(
+                      padding: EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        color: Color(0xFF283B41),
+                        borderRadius: BorderRadius.circular(9.0),
+                      ),
+                      child: Text(
+                        snapshot.data ?? '',
+                        style: TextStyle(
+                            color: Color.fromARGB(255, 255, 255, 255)),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ),
+            Positioned(
+              top: 90,
+              bottom: 168,
+              left: 8,
+              right: 8,
+              child: Container(
+                padding: EdgeInsets.all(9.0),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(9.0),
+                ),
+              ),
+            ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Buttons.budgetButton(context, globalBudget),
+                    Buttons.savingsButton(context, globalSavings),
+                  ],
+                ),
+                SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Buttons.homeButton(context),
+                    Buttons.newTransactionButton(context),
+                  ],
+                ),
+              ],
+            ),
+            Positioned(
+              top: 0,
+              right: 0,
+              child: Buttons.profileButton(context, displayName),
+            ),
           ],
         ),
-        SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Buttons.homeButton(context),
-            Buttons.newTransactionButton(context),
-          ],
-        ),
-      ],
-    ),
-    Positioned(
-      top: 0,
-      right: 0,
-      child: Buttons.profileButton(context, globalUserName),
-    ),
-  ],
-),
-
       ),
     );
   }
@@ -465,57 +486,62 @@ class Home extends StatelessWidget {
   Future<String> generateMessage() async {
     DateTime now = DateTime.now();
     int hour = now.hour;
-    String name = await fetchDisplayNameFromPrefs();
     if (hour < 12) {
-      return 'Good Morning, $name!';
+      return 'Good Morning, $displayName!';
     } else if (hour < 17) {
-      return 'Good Afternoon, $name!';
+      return 'Good Afternoon, $displayName!';
     } else {
-      return 'Good Evening, $name!';
+      return 'Good Evening, $displayName!';
     }
   }
 }
-  void stayLoggedIn() async{
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  if((prefs.getBool('stayLoggedIn') != null)){
-      bool i = prefs.getBool('stayLoggedIn') as bool;
-    if((i == true)){
-     int? num = prefs.getInt('ID');
-     if(num != null ){updateInfo(num);}
-   }
-  }
-}
-  void updateInfo(int ID) async{
-      String? temp1 = "";
-      temp1 = await AuthHandler().getUsernameById(ID);
-      if (temp1 != null){
-         globalUserName = temp1;
-      }
 
-      String? temp2 = "";
-      temp2 = await AuthHandler().getDisplayNameById(ID);
-      if (temp2 != null){
-        DisplayName  = temp2;
-      }   
-}
-  Future<void> setDisplayNameInPrefs(String displayName) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('displayName', displayName);
-    print('Display Name set in SharedPreferences: $displayName');
-  }
-  Future<String> fetchDisplayNameFromPrefs() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? displayName = prefs.getString('name');
-    if (displayName != null) {
-      return displayName;
-    } else {
-      print('No Display Name found in SharedPreferences');
-      return "user";
+void stayLoggedIn() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  if ((prefs.getBool('stayLoggedIn') != null)) {
+    bool i = prefs.getBool('stayLoggedIn') as bool;
+    if ((i == true)) {
+      int? num = prefs.getInt('ID');
+      if (num != null) {
+        updateInfo(num);
+      }
     }
   }
-  Future<bool> checkStayLoggedIn() async {
+}
+
+void updateInfo(int ID) async {
+  String? temp1 = "";
+  temp1 = await AuthHandler().getUsernameById(ID);
+  if (temp1 != null) {
+    globalUserName = temp1;
+  }
+
+  String? temp2 = "";
+  temp2 = await AuthHandler().getDisplayNameById(ID);
+  if (temp2 != null) {
+    displayName = temp2;
+  }
+}
+
+Future<void> setDisplayNameInPrefs(String displayName) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  bool stayLoggedIn = prefs.getBool('stayLoggedIn') ?? false; 
+  await prefs.setString('displayName', displayName);
+  print('Display Name set in SharedPreferences: $displayName');
+}
+
+Future<String> fetchDisplayNameFromPrefs() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? displayName = prefs.getString('name');
+  if (displayName != null) {
+    return displayName;
+  } else {
+    print('No Display Name found in SharedPreferences');
+    return "user";
+  }
+}
+
+Future<bool> checkStayLoggedIn() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool stayLoggedIn = prefs.getBool('stayLoggedIn') ?? false;
   return stayLoggedIn;
 }
-
