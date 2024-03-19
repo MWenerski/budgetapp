@@ -1,4 +1,3 @@
-import 'dart:ffi';
 
 import 'package:bcrypt/bcrypt.dart';
 import 'package:fluttertoast/fluttertoast.dart';
