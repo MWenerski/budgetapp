@@ -498,7 +498,7 @@ class Home extends StatelessWidget {
                     ),
                   ],
                 ),
-                SizedBox(height: 100),
+                SizedBox(height: 20),
                 CarouselWidget(),
                 SizedBox(height: 100),
                 Row(

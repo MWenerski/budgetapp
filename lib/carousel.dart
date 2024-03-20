@@ -65,69 +65,42 @@ class CarouselWidget extends StatefulWidget {
 class CarouselWidgetState extends State<CarouselWidget> {
   final PieChartWidget pieChartWidget = PieChartWidget();
   final BarChartWidget barChartWidget = BarChartWidget();
-  int currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Map<String, double>>(
-      future: PieChartWidget.categoryTotalsFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
-            child: CircularProgressIndicator(),
-          );
-        } else if (snapshot.hasError) {
-          return Center(
-            child: Text('Error: ${snapshot.error}'),
-          );
-        } else if (snapshot.hasData) {
-          return buildCarousel();
-        } else {
-          return Center(
-            child: Text('No data available'),
-          );
-        }
+    return buildCarousel();
+  }
+
+  Widget buildCarousel() {
+    return CarouselSlider.builder(
+      itemCount: 2,
+      itemBuilder: (BuildContext context, int index, int realIndex) {
+        return Container(
+          padding: EdgeInsets.symmetric(horizontal: 20.0),
+          child: _buildCarouselItem(index),
+        );
       },
+      options: CarouselOptions(
+        aspectRatio: 1,
+        enlargeCenterPage: true,
+        enableInfiniteScroll: false,
+        autoPlay: true,
+        autoPlayInterval: Duration(seconds: 8),
+      ),
     );
   }
 
-   Widget buildCarousel() {
-  return CarouselSlider.builder(
-    itemCount: 2,
-    itemBuilder: (BuildContext context, int index, int realIndex) {
-      return AnimatedOpacity(
-        opacity: index == currentIndex ? 1.0 : 0.0,
-        duration: Duration(seconds: 20),
-        child: _buildCarouselItem(index),
-      );
-    },
-    options: CarouselOptions(
-      aspectRatio: 2,
-      enlargeCenterPage: true,
-      enableInfiniteScroll: false,
-      autoPlay: true,
-      autoPlayInterval: Duration(seconds: 8),
-      onPageChanged: (index, reason) {
-        setState(() {
-          currentIndex = index;
-        });
-      },
-    ),
-  );
-}
-
-Widget _buildCarouselItem(int index) {
-  switch (index) {
-    case 0:
-      return pieChartWidget;
-    case 1:
-      return barChartWidget;
-    default:
-      return Container(); 
+  Widget _buildCarouselItem(int index) {
+    switch (index) {
+      case 0:
+        return pieChartWidget;
+      case 1:
+        return barChartWidget;
+      default:
+        return Container();
+    }
   }
 }
-}
-
 class PieChartWidget extends StatefulWidget {
   @override
   PieChartWidgetState createState() => PieChartWidgetState();
