@@ -8,6 +8,7 @@ double globalBudget = 0.00;
 double globalSavings = 0.00;
 bool loggedIn = false;
 bool remainLoggedIn = false;
+int itemDisplayed = 0;
 
 void resetUserGlobals() {
   globalUserName = '';

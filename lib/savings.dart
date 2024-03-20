@@ -55,7 +55,7 @@ class _SavingsState extends State<Savings> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
+             
               elevation: 0,
               shadowColor: Colors.transparent,
               padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),

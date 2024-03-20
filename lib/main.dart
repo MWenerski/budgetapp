@@ -2,7 +2,6 @@
 import 'package:budgetapp/Transactions.dart' as budget_transactions;
 import 'package:budgetapp/Profile.dart';
 import 'package:budgetapp/carousel.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
@@ -194,11 +193,20 @@ class TransactionPage extends StatefulWidget {
 }
 
 class TransactionPageState extends State<TransactionPage> {
-  final TextEditingController transactionAmountController =TextEditingController();
-  final TextEditingController categoryController = TextEditingController();
+  final TextEditingController transactionAmountController =
+      TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   bool recurringValue = false;
   String transactionType = 'Income';
+  String selectedCategory = '';
+
+  List<String> incomeCategories = ['Salary', 'Bonus', 'Gift', 'Other'];
+  List<String> expenseCategories = ['Food', 'Transportation', 'Shopping', 'Entertainment', 'Other'];
+
+  List<String> get categories {
+    return transactionType == 'Income' ? incomeCategories : [...expenseCategories, 'Savings'];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -214,9 +222,6 @@ class TransactionPageState extends State<TransactionPage> {
             );
           },
         ),
-        title: Text(
-            transactionType == 'Income' ? 'Income Page' : 'Expense Page',
-            style: TextStyle(color: Colors.white)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -252,11 +257,7 @@ class TransactionPageState extends State<TransactionPage> {
               controller: descriptionController,
               labelText: 'Date',
             ),
-            _buildTextField(
-              labelText: 'Category',
-              controller: categoryController,
-              suffixText: transactionType == 'Income' ? 'Savings' : null,
-            ),
+            _buildCategoryDropdown(),
             _buildTextField(
               labelText: 'Description',
               controller: descriptionController,
@@ -315,14 +316,48 @@ class TransactionPageState extends State<TransactionPage> {
     );
   }
 
+ Widget _buildCategoryDropdown() {
+  List<String> incomeCategories = ['Salary', 'Freelance', 'Investment', 'Gift', 'Other'];
+  List<String> expenseCategories = ['Groceries', 'Utilities', 'Travel', 'Entertainment', 'Healthcare', 'Savings', 'Other'];
+
+  List<String> allCategories = [];
+
+  if (transactionType == 'Income') {
+    allCategories.addAll(incomeCategories);
+  } else {
+    allCategories.addAll(expenseCategories);
+  }
+
+ 
+  if (!allCategories.contains(selectedCategory)) {
+    selectedCategory = allCategories.first;
+  }
+
+  return DropdownButton<String>(
+    value: selectedCategory,
+    onChanged: (newValue) {
+      setState(() {
+        selectedCategory = newValue!;
+      });
+    },
+    items: allCategories
+        .map<DropdownMenuItem<String>>((String value) {
+      return DropdownMenuItem<String>(
+        value: value,
+        child: Text(value),
+      );
+    }).toList(),
+  );
+}
+
   void _submitData() async {
     final double transactionAmount =
         double.tryParse(transactionAmountController.text) ?? 0.0;
     final String formattedAmount = transactionAmount.toStringAsFixed(2);
     final String dateTime = descriptionController.text;
-    final String category = categoryController.text.toLowerCase() == 'savings'
+    final String category = selectedCategory.toLowerCase() == 'savings'
         ? 'Savings'
-        : categoryController.text;
+        : selectedCategory;
     final String description = descriptionController.text;
 
     budget_transactions.TransactionsDB transactionsDB =
@@ -342,7 +377,6 @@ class TransactionPageState extends State<TransactionPage> {
     );
 
     transactionAmountController.clear();
-    categoryController.clear();
     descriptionController.clear();
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -397,7 +431,6 @@ class DateTimePickerState extends State<DateTimePicker> {
     );
   }
 }
-
 class Home extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -431,7 +464,8 @@ class Home extends StatelessWidget {
                       child: Text(
                         snapshot.data ?? '',
                         style: TextStyle(
-                            color: Color.fromARGB(255, 255, 255, 255)),
+                          color: Color.fromARGB(255, 255, 255, 255),
+                        ),
                       ),
                     );
                   }
@@ -446,19 +480,27 @@ class Home extends StatelessWidget {
               child: Container(
                 padding: EdgeInsets.all(9.0),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Color.fromARGB(181, 37, 37, 37),
                   borderRadius: BorderRadius.circular(9.0),
                 ),
-                child: PieChartWidget(),
               ),
             ),
             Column(
               mainAxisAlignment: MainAxisAlignment.end,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(height: 12),
-                CarouselWidget(), 
-                SizedBox(height: 12),
+                Column(
+                  children: [
+                    SizedBox(height: 0, ), 
+                    Text(
+                      'Displaying:',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 100),
+                CarouselWidget(),
+                SizedBox(height: 100),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -488,116 +530,15 @@ class Home extends StatelessWidget {
 
   Future<String> generateMessage() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? displayname = prefs.getString('name');
+    String? displayName = prefs.getString('name');
     DateTime now = DateTime.now();
     int hour = now.hour;
     if (hour < 12) {
-      return 'Good Morning, $displayname!';
+      return 'Good Morning, $displayName!';
     } else if (hour < 17) {
-      return 'Good Afternoon, $displayname!';
+      return 'Good Afternoon, $displayName!';
     } else {
-      return 'Good Evening, $displayname!';
+      return 'Good Evening, $displayName!';
     }
-  }
-}
-
-class PieChartWidget extends StatefulWidget {
-  @override
-  _PieChartWidgetState createState() => _PieChartWidgetState();
-}
-
-class _PieChartWidgetState extends State<PieChartWidget> {
-  late Future<Map<String, double>> _categoryTotalsFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _updateData();
-  }
-
-  Future<void> _updateData() async {
-    TransactionAnalyzer analyzer = TransactionAnalyzer();
-    setState(() {
-      _categoryTotalsFuture = analyzer.getTransactionTotalsLast30Days();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<Map<String, double>>(
-      future: _categoryTotalsFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
-            child: CircularProgressIndicator(),
-          );
-        } else if (snapshot.hasError) {
-          return Center(
-            child: Text('Error: ${snapshot.error}'),
-          );
-        } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-          return _buildPieChart(snapshot.data!);
-        } else {
-          return _buildEmptyPieChart();
-        }
-      },
-    );
-  }
-
-  Widget _buildPieChart(Map<String, double> categoryTotals) {
-    return AspectRatio(
-      aspectRatio: 1.5,
-      child: PieChart(
-        PieChartData(
-          sections: _generatePieChartSections(categoryTotals),
-          centerSpaceRadius: 40,
-          sectionsSpace: 0,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyPieChart() {
-    return AspectRatio(
-      aspectRatio: 1.5,
-      child: PieChart(
-        PieChartData(
-          sections: [
-            PieChartSectionData(
-              color: Colors.grey,
-              value: 1.0,
-            ),
-          ],
-          centerSpaceRadius: 40,
-          sectionsSpace: 0,
-        ),
-      ),
-    );
-  }
-
-  List<PieChartSectionData> _generatePieChartSections(
-      Map<String, double> categoryTotals) {
-    List<PieChartSectionData> sections = [];
-    int index = 0;
-    categoryTotals.forEach((category, total) {
-      const double radius = 50;
-      const double titleFontSize = 14;
-
-      sections.add(
-        PieChartSectionData(
-          color: Colors.primaries[index % Colors.primaries.length],
-          value: total,
-          title: '$category\n\$$total',
-          radius: radius,
-          titleStyle: TextStyle(
-            fontSize: titleFontSize,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-      );
-      index++;
-    });
-    return sections;
   }
 }
