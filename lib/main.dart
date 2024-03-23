@@ -1,6 +1,6 @@
 // ignore_for_file: use_build_context_synchronously, must_be_immutable
-import 'package:budgetapp/Transactions.dart' as budget_transactions;
-import 'package:budgetapp/Profile.dart';
+import 'package:budgetapp/transactions.dart' as budget_transactions;
+import 'package:budgetapp/profile.dart';
 import 'package:budgetapp/carousel.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -498,9 +498,9 @@ class Home extends StatelessWidget {
                     ),
                   ],
                 ),
-                SizedBox(height: 20),
+                
                 CarouselWidget(),
-                SizedBox(height: 100),
+                SizedBox(height: 60),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [

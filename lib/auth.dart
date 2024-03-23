@@ -72,7 +72,7 @@ class AuthHandler {
         Map<String, dynamic> user = results.first;
         String storedHashedPassword = user['password'];
         bool isPasswordCorrect =
-            await BCrypt.checkpw(password, storedHashedPassword);
+            BCrypt.checkpw(password, storedHashedPassword);
         return isPasswordCorrect;
       } else {
         return false;
@@ -152,7 +152,7 @@ class AuthHandler {
         throw Exception('No Name Found for ID');
       }
     } catch (e) {
-      throw e;
+      rethrow;
     }
   }
 

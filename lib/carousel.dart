@@ -1,4 +1,5 @@
-import 'package:budgetapp/Transactions.dart';
+import 'package:budgetapp/main.dart';
+import 'package:budgetapp/transactions.dart';
 import 'package:budgetapp/globals.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
@@ -55,6 +56,37 @@ class TransactionAnalyzer {
       rethrow;
     }
   }
+
+  Future<Map<String, double>> getTransactionTotalsLast6Months() async {
+    try {
+      DateTime endDate = DateTime.now();
+      DateTime startDate = DateTime(endDate.year, endDate.month - 6, 1);
+
+      DateFormat formatter = DateFormat('yyyy-MM-dd');
+      String startDateStr = formatter.format(startDate);
+      String endDateStr = formatter.format(endDate);
+
+      List<Transaction> transactions = await transactionsDB
+          .getTransactionsBetweenDates(startDateStr, endDateStr);
+
+      transactions = transactions
+          .where((transaction) => transaction.transactionType == "Income")
+          .toList();
+
+      Map<String, double> monthlyIncome = {};
+
+      for (Transaction transaction in transactions) {
+        DateTime transactionDateTime = DateTime.parse(transaction.dateTime);
+        String monthYear = DateFormat('MMM yyyy').format(transactionDateTime);
+        double amount = transaction.transactionAmount;
+        monthlyIncome[monthYear] = (monthlyIncome[monthYear] ?? 0.0) + amount;
+      }
+      return monthlyIncome;
+    } catch (e) {
+      print('Error getting monthly income: $e');
+      rethrow;
+    }
+  }
 }
 
 class CarouselWidget extends StatefulWidget {
@@ -65,6 +97,7 @@ class CarouselWidget extends StatefulWidget {
 class CarouselWidgetState extends State<CarouselWidget> {
   final PieChartWidget pieChartWidget = PieChartWidget();
   final BarChartWidget barChartWidget = BarChartWidget();
+  final StackedBarChartWidget stackedBarChartWidget = StackedBarChartWidget();
 
   @override
   Widget build(BuildContext context) {
@@ -73,10 +106,12 @@ class CarouselWidgetState extends State<CarouselWidget> {
 
   Widget buildCarousel() {
     return CarouselSlider.builder(
-      itemCount: 2,
+      itemCount: 3,
       itemBuilder: (BuildContext context, int index, int realIndex) {
         return Container(
-          padding: EdgeInsets.symmetric(horizontal: 20.0),
+          padding: EdgeInsets.symmetric(
+              horizontal: 40.0,
+              vertical: 60.0), 
           child: _buildCarouselItem(index),
         );
       },
@@ -96,11 +131,14 @@ class CarouselWidgetState extends State<CarouselWidget> {
         return pieChartWidget;
       case 1:
         return barChartWidget;
+      case 2:
+        return stackedBarChartWidget;
       default:
         return Container();
     }
   }
 }
+
 class PieChartWidget extends StatefulWidget {
   @override
   PieChartWidgetState createState() => PieChartWidgetState();
@@ -147,23 +185,22 @@ class PieChartWidgetState extends State<PieChartWidget> {
     );
   }
 
- Widget _buildPieChart(Map<String, double> categoryTotals) {
-  return AspectRatio(
-    aspectRatio: 1,
-    child: SizedBox(
-      width: double.infinity,
-      child: PieChart(
-        PieChartData(
-          sections: _generatePieChartSections(categoryTotals),
-          centerSpaceRadius: 80,
-          sectionsSpace: 0,
-          borderData: FlBorderData(show: false),
+  Widget _buildPieChart(Map<String, double> categoryTotals) {
+    return AspectRatio(
+      aspectRatio: 1,
+      child: SizedBox(
+        width: double.infinity,
+        child: PieChart(
+          PieChartData(
+            sections: _generatePieChartSections(categoryTotals),
+            centerSpaceRadius: 80,
+            sectionsSpace: 0,
+            borderData: FlBorderData(show: false),
+          ),
         ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   Widget _buildEmptyPieChart() {
     return AspectRatio(
@@ -186,31 +223,29 @@ class PieChartWidgetState extends State<PieChartWidget> {
     );
   }
 
- List<PieChartSectionData> _generatePieChartSections(
+  List<PieChartSectionData> _generatePieChartSections(
     Map<String, double> categoryTotals,
   ) {
     List<PieChartSectionData> sections = [];
     int index = 0;
 
-    
     List<Color> pieColors = [
+      Color.fromARGB(255, 23, 34, 37),
       Color(0xFF283B41),
       Color(0xFF3C525A),
-      Color(0xFF4F676F),
       Color(0xFF617D86),
-      Color(0xFF739399),
-      Color(0xFF85A2AD),
+      Color.fromARGB(255, 94, 146, 163),
+      Color.fromARGB(255, 153, 153, 153),
     ];
 
     categoryTotals.forEach((category, total) {
       const double radius = 50;
       const double titleFontSize = 14;
 
-      
       String labelText = '$category\n${_formatCurrency(total)}';
       sections.add(
         PieChartSectionData(
-          color: pieColors[index % pieColors.length], 
+          color: pieColors[index % pieColors.length],
           value: total,
           title: labelText,
           radius: radius,
@@ -218,12 +253,12 @@ class PieChartWidgetState extends State<PieChartWidget> {
           titleStyle: TextStyle(
             fontSize: titleFontSize,
             fontWeight: FontWeight.bold,
-            color: Colors.white, 
+            color: Colors.white,
             shadows: <Shadow>[
               Shadow(
                 offset: Offset(0, 0),
                 blurRadius: 4.0,
-                color: Colors.black, 
+                color: Colors.black,
               ),
             ],
           ),
@@ -233,7 +268,6 @@ class PieChartWidgetState extends State<PieChartWidget> {
     });
     return sections;
   }
-
 
   String _formatCurrency(double amount) {
     Map<String, String> currencySymbols = {
@@ -250,7 +284,8 @@ class PieChartWidgetState extends State<PieChartWidget> {
     String currencySymbol = currencySymbols[globalCurrency] ?? '\$';
     return '$currencySymbol${amount.toStringAsFixed(2)}';
   }
-   String getMessageForIndex(int index) {
+
+  String getMessageForIndex(int index) {
     switch (index) {
       case 0:
         return 'Showing first item';
@@ -263,6 +298,7 @@ class PieChartWidgetState extends State<PieChartWidget> {
     }
   }
 }
+
 class BarChartWidget extends StatefulWidget {
   @override
   BarChartWidgetState createState() => BarChartWidgetState();
@@ -293,9 +329,12 @@ class BarChartWidgetState extends State<BarChartWidget> {
         DateFormat formatter = DateFormat('yyyy-MM-dd');
         String startDateStr = formatter.format(startDate);
         String endDateStr = formatter.format(endDate);
-        TransactionsDB transactionsDB = await DatabaseHelper().getTransactionsDatabase();
-        List<Transaction> transactions = await transactionsDB.getTransactionsBetweenDates(startDateStr, endDateStr);
-        double totalSpending = transactions.fold(0.0, (sum, transaction) => sum + transaction.transactionAmount);
+        TransactionsDB transactionsDB =
+            await DatabaseHelper().getTransactionsDatabase();
+        List<Transaction> transactions = await transactionsDB
+            .getTransactionsBetweenDates(startDateStr, endDateStr);
+        double totalSpending = transactions.fold(
+            0.0, (sum, transaction) => sum + transaction.transactionAmount);
         monthlySpending.add(totalSpending);
       }
       return monthlySpending.reversed.toList();
@@ -329,49 +368,50 @@ class BarChartWidgetState extends State<BarChartWidget> {
     );
   }
 
-  Widget _buildBarChart(List<double> monthlySpending) {
-    List<String> monthNames = _getMonthNames();
-
-    return AspectRatio(
-      aspectRatio: 2,
-      child: BarChart(
-        BarChartData(
-          titlesData: FlTitlesData(
-            show: true,
-            bottomTitles: SideTitles(
-              showTitles: true,
-              getTextStyles: (value) => const TextStyle(color: Color(0xff7589a2), fontSize: 14),
-              margin: 20,
-              getTitles: (double value) {
-                int index = value.toInt();
-                if (index >= 0 && index < monthNames.length) {
-                  return monthNames[index];
-                }
-                return '';
-              },
-            ),
-            leftTitles: SideTitles(showTitles: false),
+ Widget _buildBarChart(List<double> monthlySpending) {
+  List<String> monthNames = _getMonthNames();
+  return AspectRatio(
+    aspectRatio: 2,
+    child: BarChart(
+      BarChartData(
+        titlesData: FlTitlesData(
+          show: true,
+          bottomTitles: SideTitles(
+            showTitles: true,
+            getTextStyles: (value) => const TextStyle(color: Color(0xff7589a2), fontSize: 14),
+            margin: 20,
+            getTitles: (double value) {
+              int index = value.toInt();
+              if (index >= 0 && index < monthNames.length) {
+                return monthNames[index];
+              }
+              return '';
+            },
+            rotateAngle: 45,
           ),
-          borderData: FlBorderData(show: false),
-          barGroups: monthlySpending.asMap().entries.map((entry) {
-            int index = entry.key;
-            double value = entry.value;
-            return BarChartGroupData(
-              x: index,
-              barRods: [
-                BarChartRodData(
-                  y: value,
-                  colors: [Color(0xFF4F676F)],
-                  width: 20,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ],
-            );
-          }).toList(),
+          leftTitles: SideTitles(showTitles: false),
         ),
+        borderData: FlBorderData(show: false),
+        barGroups: monthlySpending.asMap().entries.map((entry) {
+          int index = entry.key;
+          double value = entry.value;
+          return BarChartGroupData(
+            x: index,
+            showingTooltipIndicators: [],
+            barRods: [
+              BarChartRodData(
+                y: value,
+                width: 30,
+                borderRadius: BorderRadius.circular(4),
+                colors: [Color(0xFF4F676F)],
+              ),
+            ],
+          );
+        }).toList(),
       ),
-    );
-  }
+    ),
+  );
+}
 
   List<String> _getMonthNames() {
     List<String> monthNames = [];
@@ -382,5 +422,102 @@ class BarChartWidgetState extends State<BarChartWidget> {
       monthNames.add(monthName);
     }
     return monthNames.reversed.toList();
+  }
+}
+
+class StackedBarChartWidget extends StatefulWidget {
+  @override
+  StackedBarChartWidgetState createState() => StackedBarChartWidgetState();
+}
+
+class StackedBarChartWidgetState extends State<StackedBarChartWidget> {
+  final TransactionAnalyzer analyzer = TransactionAnalyzer();
+  late Future<Map<String, double>> _monthlyIncomeFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateData();
+  }
+
+  Future<void> _updateData() async {
+    setState(() {
+      _monthlyIncomeFuture = analyzer.getTransactionTotalsLast6Months();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Map<String, double>>(
+      future: _monthlyIncomeFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(),
+          );
+        } else if (snapshot.hasError) {
+          return Center(
+            child: Text('Error: ${snapshot.error}'),
+          );
+        } else if (snapshot.hasData) {
+          return _buildStackedBarChart(snapshot.data!);
+        } else {
+          return Center(
+            child: Text('No data available'),
+          );
+        }
+      },
+    );
+  }
+
+  Widget _buildStackedBarChart(Map<String, double> monthlyIncome) {
+    return AspectRatio(
+      aspectRatio: 2,
+      child: BarChart(
+        BarChartData(
+          titlesData: FlTitlesData(
+            show: true,
+            bottomTitles: SideTitles(
+              showTitles: true,
+              getTextStyles: (value) =>
+                  const TextStyle(color: Color(0xff7589a2), fontSize: 14),
+              margin: 20,
+              getTitles: (double value) {
+                int index = value.toInt();
+                final monthNames = monthlyIncome.keys.toList();
+                if (index >= 0 && index < monthNames.length) {
+                  return monthNames[index];
+                }
+                return '';
+              },
+            ),
+            leftTitles: SideTitles(showTitles: false),
+          ),
+          borderData: FlBorderData(show: false),
+          barGroups: _getBarGroups(monthlyIncome),
+        ),
+      ),
+    );
+  }
+
+  List<BarChartGroupData> _getBarGroups(Map<String, double> monthlyIncome) {
+    List<BarChartGroupData> barGroups = [];
+    int index = 0;
+    monthlyIncome.forEach((monthYear, income) {
+      final barRod = BarChartRodData(
+        y: income,
+        width: 30,
+        borderRadius: BorderRadius.circular(4),
+        colors: [Color(0xFF283B41)],
+      );
+      barGroups.add(
+        BarChartGroupData(
+          x: index,
+          barRods: [barRod],
+        ),
+      );
+      index++;
+    });
+    return barGroups;
   }
 }

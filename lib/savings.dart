@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'globals.dart';
-import 'package:budgetapp/Transactions.dart' as BudgetTransactions;
+import 'package:budgetapp/transactions.dart' as budget_transactions;
 import 'buttons.dart';
 
 class Savings extends StatefulWidget {
   @override
-  _SavingsState createState() => _SavingsState();
+  SavingsState createState() => SavingsState();
 }
 
-class _SavingsState extends State<Savings> {
-  late Future<List<BudgetTransactions.Transaction>> futureTransactions;
-  final BudgetTransactions.TransactionsDB transactionsDB =
-      BudgetTransactions.TransactionsDB();
+class SavingsState extends State<Savings> {
+  late Future<List<budget_transactions.Transaction>> futureTransactions;
+  final budget_transactions.TransactionsDB transactionsDB =
+      budget_transactions.TransactionsDB();
 
   @override
   void initState() {
@@ -78,7 +78,7 @@ class _SavingsState extends State<Savings> {
                 child: Container(
                   width: MediaQuery.of(context).size.width,
                   color: Colors.grey[800],
-                  child: FutureBuilder<List<BudgetTransactions.Transaction>>(
+                  child: FutureBuilder<List<budget_transactions.Transaction>>(
                     future: futureTransactions,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {

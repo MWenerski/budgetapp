@@ -1,5 +1,5 @@
-import 'package:budgetapp/Profile.dart';
-import 'package:budgetapp/Transactions.dart';
+import 'package:budgetapp/profile.dart';
+import 'package:budgetapp/transactions.dart';
 import 'package:budgetapp/auth.dart';
 import 'package:budgetapp/globals.dart';
 import 'package:budgetapp/main.dart';
@@ -153,6 +153,7 @@ class _DeleteAccountConfirmationDialogState
                   TransactionsDB().deleteTransactions();
                   AuthHandler().deleteAccount(globalUser);
                   AuthHandler().logout();
+                  // ignore: use_build_context_synchronously
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => LoginWidget()),
