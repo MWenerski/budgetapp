@@ -1,11 +1,10 @@
 library user.globals;
+import 'carousel.dart';
 
 String displayName = "";
 String globalUserName = '';
 String globalCurrency = 'GBP';
 int globalUser = 0;
-double globalBudget = 0.00;
-double globalSavings = 0.00;
 bool loggedIn = false;
 bool remainLoggedIn = false;
 int itemDisplayed = 0;
@@ -32,4 +31,10 @@ int getUserID() {
 
 bool isLoggedIn() {
   return loggedIn;
+}
+Future<double> get globalBudget{
+  return TransactionAnalyzer().calculateBudget();
+}
+Future<double> get globalSavings{
+  return TransactionAnalyzer().getTotalSavings();
 }

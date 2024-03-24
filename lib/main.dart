@@ -48,7 +48,6 @@ class LoginWidgetState extends State<LoginWidget> {
     String password = passwordController.text;
     bool isAuthed = await AuthHandler().authenticateUser(username, password);
     if ((username.isNotEmpty || password.isNotEmpty) && isAuthed) {
-      print('works');
       int userID = await AuthHandler().fetchID(username);
       SharedPreferences prefs = await SharedPreferences.getInstance();
       if (rememberLogin) {
@@ -61,16 +60,13 @@ class LoginWidgetState extends State<LoginWidget> {
       globalUser = userID;
       await transactionsDB.initDatabase(userID);
       if (prefs.getBool('$userID+log') != null) {
-        print(globalUserName);
-        print(displayName);
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => Home()),
         );
       } else {
         prefs.setBool('$userID+log', true);
-        print(globalUserName);
-        print(displayName);
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => Profile()),
@@ -196,26 +192,36 @@ class TransactionPageState extends State<TransactionPage> {
   final TextEditingController transactionAmountController =
       TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
+  final TextEditingController dateController = TextEditingController();
   bool recurringValue = false;
   String transactionType = 'Income';
   String selectedCategory = '';
 
   List<String> incomeCategories = ['Salary', 'Bonus', 'Gift', 'Other'];
-  List<String> expenseCategories = ['Food', 'Transportation', 'Shopping', 'Entertainment', 'Other'];
+  List<String> expenseCategories = [
+    'Food',
+    'Transportation',
+    'Shopping',
+    'Entertainment',
+    'Other'
+  ];
 
   List<String> get categories {
-    return transactionType == 'Income' ? incomeCategories : [...expenseCategories, 'Savings'];
+    return transactionType == 'Income'
+        ? incomeCategories
+        : [...expenseCategories, 'Savings'];
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.grey[900],
       appBar: AppBar(
         backgroundColor: Colors.black,
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
+            TransactionAnalyzer().calculateBudget();
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => Home()),
@@ -224,7 +230,7 @@ class TransactionPageState extends State<TransactionPage> {
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -239,33 +245,47 @@ class TransactionPageState extends State<TransactionPage> {
                   .map<DropdownMenuItem<String>>((String value) {
                 return DropdownMenuItem<String>(
                   value: value,
-                  child: Text(value),
+                  child: Text(
+                    value,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold, 
+                    ),
+                  ),
                 );
               }).toList(),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 24), 
             _buildTextField(
               labelText: 'Transaction Amount',
               controller: transactionAmountController,
               keyboardType: TextInputType.numberWithOptions(decimal: true),
               suffixText: '.00',
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 24), 
             _buildRecurringCheckbox(),
-            SizedBox(height: 16),
+            SizedBox(height: 24), 
             DateTimePicker(
-              controller: descriptionController,
+              dateController: dateController,
               labelText: 'Date',
             ),
+            SizedBox(height: 24), 
             _buildCategoryDropdown(),
+            SizedBox(height: 24), 
             _buildTextField(
               labelText: 'Description',
               controller: descriptionController,
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 24),
             ElevatedButton(
-              onPressed: _submitData,
-              child: Text('Submit', style: TextStyle(color: Colors.white)),
+              onPressed: () async {
+                _submitData();
+                await TransactionAnalyzer().calculateBudget();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black, 
+              ),
+              child: Text('Submit'),
             ),
           ],
         ),
@@ -278,15 +298,25 @@ class TransactionPageState extends State<TransactionPage> {
     required TextEditingController controller,
     TextInputType keyboardType = TextInputType.text,
     String? suffixText,
+    bool enabled = true,
   }) {
     return TextField(
       controller: controller,
+      readOnly: !enabled,
+      onTap: () {
+        if (enabled) {
+          DateTimePickerState()._selectDate(context);
+        }
+      },
       decoration: InputDecoration(
         labelText: labelText,
         labelStyle: TextStyle(color: Colors.white),
-        border: OutlineInputBorder(),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(9),
+        ),
         enabledBorder: OutlineInputBorder(
           borderSide: BorderSide(color: Colors.white),
+          borderRadius: BorderRadius.circular(9),
         ),
         suffixText: suffixText,
       ),
@@ -316,45 +346,63 @@ class TransactionPageState extends State<TransactionPage> {
     );
   }
 
- Widget _buildCategoryDropdown() {
-  List<String> incomeCategories = ['Salary', 'Freelance', 'Investment', 'Gift', 'Other'];
-  List<String> expenseCategories = ['Groceries', 'Utilities', 'Travel', 'Entertainment', 'Healthcare', 'Savings', 'Other'];
+  Widget _buildCategoryDropdown() {
+    List<String> incomeCategories = [
+      'Salary',
+      'Freelance',
+      'Investment',
+      'Gift',
+      'Other'
+    ];
+    List<String> expenseCategories = [
+      'Groceries',
+      'Utilities',
+      'Travel',
+      'Entertainment',
+      'Healthcare',
+      'Savings',
+      'Other'
+    ];
 
-  List<String> allCategories = [];
+    List<String> allCategories = [];
 
-  if (transactionType == 'Income') {
-    allCategories.addAll(incomeCategories);
-  } else {
-    allCategories.addAll(expenseCategories);
+    if (transactionType == 'Income') {
+      allCategories.addAll(incomeCategories);
+    } else {
+      allCategories.addAll(expenseCategories);
+    }
+
+    if (!allCategories.contains(selectedCategory)) {
+      selectedCategory = allCategories.first;
+    }
+
+    return DropdownButton<String>(
+      value: selectedCategory,
+      onChanged: (newValue) {
+        setState(() {
+          selectedCategory = newValue!;
+        });
+      },
+      items: allCategories.map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(
+            value,
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        );
+      }).toList(),
+    );
   }
-
- 
-  if (!allCategories.contains(selectedCategory)) {
-    selectedCategory = allCategories.first;
-  }
-
-  return DropdownButton<String>(
-    value: selectedCategory,
-    onChanged: (newValue) {
-      setState(() {
-        selectedCategory = newValue!;
-      });
-    },
-    items: allCategories
-        .map<DropdownMenuItem<String>>((String value) {
-      return DropdownMenuItem<String>(
-        value: value,
-        child: Text(value),
-      );
-    }).toList(),
-  );
-}
 
   void _submitData() async {
     final double transactionAmount =
         double.tryParse(transactionAmountController.text) ?? 0.0;
     final String formattedAmount = transactionAmount.toStringAsFixed(2);
-    final String dateTime = descriptionController.text;
+    final String dateTime = dateController.text;
     final String category = selectedCategory.toLowerCase() == 'savings'
         ? 'Savings'
         : selectedCategory;
@@ -380,19 +428,21 @@ class TransactionPageState extends State<TransactionPage> {
     descriptionController.clear();
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Data submitted successfully',
-          style: TextStyle(color: Colors.white)),
+      content: Text(
+        'Data submitted successfully',
+        style: TextStyle(color: Colors.white),
+      ),
     ));
   }
 }
 
 class DateTimePicker extends StatefulWidget {
-  final TextEditingController controller;
+  final TextEditingController dateController;
   final String labelText;
 
   const DateTimePicker({
     Key? key,
-    required this.controller,
+    required this.dateController,
     required this.labelText,
   }) : super(key: key);
 
@@ -402,6 +452,7 @@ class DateTimePicker extends StatefulWidget {
 
 class DateTimePickerState extends State<DateTimePicker> {
   DateTime? selectedDate;
+
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -412,7 +463,7 @@ class DateTimePickerState extends State<DateTimePicker> {
     if (picked != null && picked != selectedDate) {
       setState(() {
         selectedDate = picked;
-        widget.controller.text = DateFormat('yyyy-MM-dd').format(picked);
+        widget.dateController.text = DateFormat('yyyy-MM-dd').format(picked);
       });
     }
   }
@@ -420,7 +471,7 @@ class DateTimePickerState extends State<DateTimePicker> {
   @override
   Widget build(BuildContext context) {
     return TextField(
-      controller: widget.controller,
+      controller: widget.dateController,
       decoration: InputDecoration(
         labelText: widget.labelText,
         suffixIcon: IconButton(
@@ -431,6 +482,7 @@ class DateTimePickerState extends State<DateTimePicker> {
     );
   }
 }
+
 class Home extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -478,7 +530,7 @@ class Home extends StatelessWidget {
               left: 8,
               right: 8,
               child: Container(
-                padding: EdgeInsets.all(9.0),
+                padding: EdgeInsets.all(4.0),
                 decoration: BoxDecoration(
                   color: Color.fromARGB(181, 37, 37, 37),
                   borderRadius: BorderRadius.circular(9.0),
@@ -489,23 +541,39 @@ class Home extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Column(
-                  children: [
-                    SizedBox(height: 0, ), 
-                    Text(
-                      'Displaying:',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
-                  ],
-                ),
-                
                 CarouselWidget(),
-                SizedBox(height: 60),
+                SizedBox(height: 120),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Buttons.budgetButton(context, globalBudget),
-                    Buttons.savingsButton(context, globalSavings),
+                    FutureBuilder<double>(
+                      future: globalBudget,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return CircularProgressIndicator();
+                        } else if (snapshot.hasError) {
+                          return Text('Error: ${snapshot.error}');
+                        } else {
+                          return Buttons.budgetButton(
+                              context, snapshot.data ?? 0.00);
+                        }
+                      },
+                    ),
+                    FutureBuilder<double>(
+                      future: globalSavings,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return CircularProgressIndicator();
+                        } else if (snapshot.hasError) {
+                          return Text('Error: ${snapshot.error}');
+                        } else {
+                          return Buttons.savingsButton(
+                              context, snapshot.data ?? 0.00);
+                        }
+                      },
+                    ),
                   ],
                 ),
                 SizedBox(height: 12),

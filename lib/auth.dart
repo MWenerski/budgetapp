@@ -34,7 +34,6 @@ class AuthHandler {
   Future<List<Map<String, dynamic>>> fetchEntries() async {
     try {
       List<Map<String, dynamic>> entries = await _database.query('users');
-      print(entries);
       return entries;
     } catch (e) {
       print('Error fetching entries: $e');
@@ -102,8 +101,7 @@ class AuthHandler {
         where: 'id = ?',
         whereArgs: [id],
       );
-      print(id);
-      print(results);
+     
       if (results.isNotEmpty) {
         return results.first;
       } else {
@@ -140,7 +138,7 @@ class AuthHandler {
           int? num = int.tryParse(idValue.toString());
 
           if (num != null) {
-            print(num);
+            
             return num;
           } else {
             throw Exception('Invalid Name or no ID assigned');

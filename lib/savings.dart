@@ -1,3 +1,4 @@
+import 'package:budgetapp/carousel.dart';
 import 'package:flutter/material.dart';
 import 'globals.dart';
 import 'package:budgetapp/transactions.dart' as budget_transactions;
@@ -30,15 +31,28 @@ class SavingsState extends State<Savings> {
         children: [
           SizedBox(height: 50.0),
           Text(
-            'Current Savings Goal:',
+            'Current Savings:',
             style: TextStyle(color: Colors.white, fontSize: 24.0),
           ),
-          Text(
-            '$globalCurrency $globalSavings',
-            style: TextStyle(
-                color: Colors.white,
-                fontSize: 28.0,
-                fontWeight: FontWeight.bold),
+          FutureBuilder<double>(
+            future: TransactionAnalyzer().getTotalSavings(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return CircularProgressIndicator();
+              } else if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}');
+              } else {
+                double totalSavings = snapshot.data ?? 0.0;
+                return Text(
+                  '$globalCurrency $totalSavings',
+                  style: TextStyle(
+                    fontSize: 24.0,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                );
+              }
+            },
           ),
           SizedBox(height: 20.0),
           ElevatedButton(
@@ -48,14 +62,12 @@ class SavingsState extends State<Savings> {
                 builder: (context) {
                   return AlertDialog(
                     title: Text('Enter New Savings Goal'),
-                    // Add your form here to change the savings goal
                   );
                 },
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-             
+              backgroundColor: Color(0xFF283B41),
               elevation: 0,
               shadowColor: Colors.transparent,
               padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),

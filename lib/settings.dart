@@ -79,7 +79,7 @@ class _SettingsBody extends StatelessWidget {
           SizedBox(height: 250),
           ElevatedButton(
             onPressed: () {
-              print(globalUserName);
+            
               _showDeleteAccountConfirmationDialog(context);
             },
             style: ElevatedButton.styleFrom(

@@ -89,29 +89,34 @@ class Buttons {
     );
   }
 
-  static Widget budgetButton(BuildContext context, double budget) {
-    String buttonText = 'Budget: $budget';
+ static Widget budgetButton(BuildContext context, double budget) {
+  String buttonText = 'Budget: $budget';
 
-    return ElevatedButton(
-      onPressed: () {},
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Color(0xFF283B41),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(9.0),
-        ),
+  return ElevatedButton(
+    onPressed: () {},
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Color(0xFF283B41),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(9.0),
       ),
-      child: Container(
-        height: 72.0,
-        width: 148.0,
-        alignment: Alignment.center,
-        child: Text(
-          buttonText,
-          style: TextStyle(
-              fontSize: 24.0, fontWeight: FontWeight.bold, color: Colors.white),
+    ),
+    child: Container(
+      height: 72.0,
+      width: 148.0,
+      alignment: Alignment.center,
+      child: Text(
+        buttonText,
+        style: TextStyle(
+          fontSize: 24.0,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
         ),
+        textAlign: TextAlign.center,
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   static Widget savingsButton(BuildContext context, double savings) {
     String buttonText = 'Savings: $savings';
