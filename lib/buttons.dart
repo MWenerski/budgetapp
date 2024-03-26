@@ -1,4 +1,5 @@
-import 'package:budgetapp/globals.dart';
+
+import 'package:budgetapp/new_transaction.dart';
 import 'package:budgetapp/settings.dart';
 import 'package:budgetapp/view_transactions.dart';
 import 'package:flutter/material.dart';
@@ -75,8 +76,8 @@ class Buttons {
         shape: CircleBorder(),
       ),
       child: Container(
-        height: 72.0,
-        width: 72.0,
+        height: 60.0,
+        width: 60.0,
         alignment: Alignment.center,
         child: Image.asset(
           'assets/settings.png',

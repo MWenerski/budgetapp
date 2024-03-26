@@ -1,3 +1,5 @@
+import 'package:budgetapp/globals.dart';
+import 'package:budgetapp/main.dart';
 import 'package:flutter/material.dart';
 import 'transactions.dart';
 
@@ -16,61 +18,123 @@ class ViewTransactionsState extends State<ViewTransactions> {
   }
 
   Future<List<Transaction>> _fetchTransactions() async {
-    return await TransactionsDB().getTransactions();
+    List<Transaction> transactions = await TransactionsDB().getTransactions();
+    transactions.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+    return transactions;
+  }
+
+  String _formatCurrency(double amount) {
+    Map<String, String> currencySymbols = {
+      'USD': '\$',
+      'EUR': '€',
+      'GBP': '£',
+      'JPY': '¥',
+      'CAD': 'CA\$',
+      'AUD': 'A\$',
+      'CNY': '¥',
+      'INR': '₹',
+      'BRL': 'R\$',
+    };
+    String currencySymbol = currencySymbols[globalCurrency] ?? '\$';
+    return '$currencySymbol${amount.toStringAsFixed(2)}';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('View Transactions'),
+        backgroundColor: Colors.black,
+        title: Text(
+          'View Transactions',
+          style: TextStyle(color: Colors.white),
+        ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => Home()),
+            );
+          },
+        ),
       ),
+      backgroundColor: Colors.grey[900], 
       body: FutureBuilder<List<Transaction>>(
         future: _transactionsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+              child: Text(
+                'Error: ${snapshot.error}',
+                style: TextStyle(color: Colors.white),
+              ),
+            );
           } else {
             final transactions = snapshot.data!;
-            return ListView.builder(
-              itemCount: transactions.length,
-              itemBuilder: (context, index) {
-                final transaction = transactions[index];
-                return Card(
-                  margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  elevation: 2.0,
-                  child: ListTile(
-                    contentPadding: EdgeInsets.all(16.0),
-                    title: Text(
-                      transaction.transactionType,
-                      style: TextStyle(fontWeight: FontWeight.bold),
+            return ListView(
+              children: [
+                DataTable(
+                  columnSpacing: 8.0,
+                  columns: [
+                    DataColumn(
+                      label: Text('Date', style: TextStyle(color: Colors.white)),
                     ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(height: 4.0),
-                        Text(
-                          'Amount: \$${transaction.transactionAmount.toStringAsFixed(2)}',
-                        ),
-                        SizedBox(height: 4.0),
-                        Text(
-                          'Date: ${transaction.dateTime}',
-                        ),
-                        SizedBox(height: 4.0),
-                        Text(
-                          'Category: ${transaction.category}',
-                        ),
-                      ],
+                    DataColumn(
+                      label: Text('Amount', style: TextStyle(color: Colors.white)),
                     ),
-                  ),
-                );
-              },
+                    DataColumn(
+                      label: Text('Type', style: TextStyle(color: Colors.white)),
+                    ),
+                    DataColumn(
+                      label: Text('Category', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                  rows: transactions
+                      .map(
+                        (transaction) => DataRow(
+                          onSelectChanged: (selected) {
+                            if (selected != null && selected) {
+                              _showTransactionDescription(transaction.description);
+                            }
+                          },
+                          cells: [
+                            DataCell(Text(transaction.dateTime, style: TextStyle(color: Colors.white))),
+                            DataCell(Text(_formatCurrency(transaction.transactionAmount), style: TextStyle(color: Colors.white))),
+                            DataCell(Text(transaction.transactionType, style: TextStyle(color: Colors.white))),
+                            DataCell(Text(transaction.category, style: TextStyle(color: Colors.white))),
+                          ],
+                        ),
+                      )
+                      .toList(),
+                ),
+              ],
             );
           }
         },
       ),
+    );
+  }
+
+  void _showTransactionDescription(String description) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Transaction Description', style: TextStyle(color: Colors.white)),
+          content: Text(description, style: TextStyle(color: Colors.white)),
+          backgroundColor: Colors.black,
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Close', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
     );
   }
 }
