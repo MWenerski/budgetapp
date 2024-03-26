@@ -8,6 +8,7 @@ int globalUser = 0;
 bool loggedIn = false;
 bool remainLoggedIn = false;
 int itemDisplayed = 0;
+double globalGoal = 0.00;
 
 void resetUserGlobals() {
   globalUserName = '';

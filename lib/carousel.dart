@@ -158,7 +158,7 @@ class CarouselWidgetState extends State<CarouselWidget> {
       itemBuilder: (BuildContext context, int index, int realIndex) {
         return Container(
           padding:
-              EdgeInsets.only(left: 30.0, right: 30.0, top: 55.0, bottom: 0.0),
+              EdgeInsets.only(left: 22.0, right: 22.0, top: 55.0, bottom: 0.0),
           child: Transform.scale(
             scale: index == 2 ? 0.8 : 1.0,
             child: _buildCarouselItem(index),
@@ -168,9 +168,9 @@ class CarouselWidgetState extends State<CarouselWidget> {
       options: CarouselOptions(
         aspectRatio: 1,
         enlargeCenterPage: true,
-        enableInfiniteScroll: false,
+        enableInfiniteScroll: true,
         autoPlay: true,
-        autoPlayInterval: Duration(seconds: 8),
+        autoPlayInterval: Duration(seconds: 10),
       ),
     );
   }
@@ -612,7 +612,7 @@ class StackedBarChartWidgetState extends State<StackedBarChartWidget> {
     monthlyIncome.forEach((monthYear, income) {
       final barRod = BarChartRodData(
         y: income,
-        width: 45,
+        width: 30,
         borderRadius: BorderRadius.circular(4),
         colors: [Color(0xFF283B41)],
       );

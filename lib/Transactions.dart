@@ -118,7 +118,7 @@ class Transaction {
   final String transactionType;
   final double transactionAmount;
   final bool recurring;
-  final String dateTime; 
+  final String dateTime;
   final String category;
   final String description;
 
@@ -132,19 +132,17 @@ class Transaction {
     required this.description,
   });
 
- 
   Map<String, dynamic> toMap() {
     return {
       'transactionType': transactionType,
       'transactionAmount': transactionAmount,
       'recurring': recurring ? 1 : 0,
-      'dateTime': dateTime, 
+      'dateTime': dateTime,
       'category': category,
       'description': description,
     };
   }
 
- 
   factory Transaction.fromMap(Map<String, dynamic> map) {
     return Transaction(
       transactionID: map['transactionID'],
@@ -157,3 +155,4 @@ class Transaction {
     );
   }
 }
+

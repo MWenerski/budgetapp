@@ -249,29 +249,29 @@ class TransactionPageState extends State<TransactionPage> {
                     value,
                     style: TextStyle(
                       color: Colors.white,
-                      fontWeight: FontWeight.bold, 
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 );
               }).toList(),
             ),
-            SizedBox(height: 24), 
+            SizedBox(height: 24),
             _buildTextField(
               labelText: 'Transaction Amount',
               controller: transactionAmountController,
               keyboardType: TextInputType.numberWithOptions(decimal: true),
               suffixText: '.00',
             ),
-            SizedBox(height: 24), 
+            SizedBox(height: 24),
             _buildRecurringCheckbox(),
-            SizedBox(height: 24), 
+            SizedBox(height: 24),
             DateTimePicker(
               dateController: dateController,
               labelText: 'Date',
             ),
-            SizedBox(height: 24), 
+            SizedBox(height: 24),
             _buildCategoryDropdown(),
-            SizedBox(height: 24), 
+            SizedBox(height: 24),
             _buildTextField(
               labelText: 'Description',
               controller: descriptionController,
@@ -283,7 +283,7 @@ class TransactionPageState extends State<TransactionPage> {
                 await TransactionAnalyzer().calculateBudget();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black, 
+                backgroundColor: Colors.black,
               ),
               child: Text('Submit'),
             ),
@@ -526,7 +526,7 @@ class Home extends StatelessWidget {
             ),
             Positioned(
               top: 90,
-              bottom: 168,
+              bottom: 252,
               left: 8,
               right: 8,
               child: Container(
@@ -542,7 +542,9 @@ class Home extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 CarouselWidget(),
-                SizedBox(height: 120),
+                SizedBox(height: 60),
+                Buttons.viewTransactionsButton(context), 
+                SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -569,8 +571,11 @@ class Home extends StatelessWidget {
                         } else if (snapshot.hasError) {
                           return Text('Error: ${snapshot.error}');
                         } else {
-                          return Buttons.savingsButton(
-                              context, snapshot.data ?? 0.00);
+                          return SavingsButton(
+                            savings: snapshot.data ?? 0.00,
+                            savingsGoal:
+                                globalGoal,
+                          );
                         }
                       },
                     ),
