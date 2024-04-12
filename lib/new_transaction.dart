@@ -81,6 +81,7 @@ class TransactionPageState extends State<TransactionPage> {
                       ),
                     );
                   }).toList(),
+                  dropdownColor: const Color.fromARGB(255, 63, 63, 63),
                 ),
                 SizedBox(width: 20),
                 Expanded(
@@ -92,8 +93,7 @@ class TransactionPageState extends State<TransactionPage> {
             _buildTextField(
               labelText: 'Transaction Amount',
               controller: transactionAmountController,
-              keyboardType:
-                  TextInputType.numberWithOptions(decimal: true),
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
             ),
             SizedBox(height: 24),
             DateTimePicker(
@@ -126,7 +126,6 @@ class TransactionPageState extends State<TransactionPage> {
     required String labelText,
     required TextEditingController controller,
     TextInputType keyboardType = TextInputType.text,
-    bool enabled = true,
   }) {
     return TextField(
       controller: controller,
@@ -195,6 +194,7 @@ class TransactionPageState extends State<TransactionPage> {
           ),
         );
       }).toList(),
+      dropdownColor: const Color.fromARGB(255, 63, 63, 63),
     );
   }
 
