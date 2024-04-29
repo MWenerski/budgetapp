@@ -28,6 +28,7 @@ class TransactionPageState extends State<TransactionPage> {
     'Transportation',
     'Shopping',
     'Entertainment',
+    'Savings',
     'Other'
   ];
 

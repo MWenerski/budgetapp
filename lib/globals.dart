@@ -1,5 +1,6 @@
 library user.globals;
 import 'carousel.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 String displayName = "";
 String globalUserName = '';
@@ -38,4 +39,14 @@ Future<double> get globalBudget{
 }
 Future<double> get globalSavings{
   return TransactionAnalyzer().getTotalSavings();
+}
+Future<double> globalGoalPrefs() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  double? storedGoal = prefs.getDouble('goal');
+  if (storedGoal != null){
+    return storedGoal;
+  } else {
+    
+    return 0.00;
+  }
 }

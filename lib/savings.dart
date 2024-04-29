@@ -1,5 +1,6 @@
 import 'package:budgetapp/carousel.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'globals.dart';
 import 'package:budgetapp/transactions.dart' as budget_transactions;
 import 'buttons.dart';
@@ -60,8 +61,48 @@ class SavingsState extends State<Savings> {
               showDialog(
                 context: context,
                 builder: (context) {
+                  TextEditingController controller = TextEditingController();
+
                   return AlertDialog(
                     title: Text('Enter New Savings Goal'),
+                    content: TextField(
+                      controller: controller,
+                      keyboardType:
+                          TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
+                        hintText: 'Enter new savings goal',
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          String input = controller.text;
+                          if (input.isNotEmpty &&
+                              double.tryParse(input) != null) {
+                            double newGoal = double.parse(input);
+                            setState(() {
+                              globalGoal = newGoal;
+                            });
+                            SharedPreferences.getInstance().then((prefs) {
+                              prefs.setDouble('goal', newGoal);
+                            });
+                            Navigator.of(context).pop(); 
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text('Please enter a valid number')),
+                            );
+                          }
+                        },
+                        child: Text('Update Goal'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: Text('Cancel'),
+                      ),
+                    ],
                   );
                 },
               );

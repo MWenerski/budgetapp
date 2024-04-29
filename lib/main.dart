@@ -69,6 +69,13 @@ class LoginWidgetState extends State<LoginWidget> {
           MaterialPageRoute(builder: (context) => Profile()),
         );
       }
+      void fetchGlobalGoal() async {
+        double goal = await globalGoalPrefs();
+        setState(() {
+          globalGoal = goal;
+        });
+      }
+      fetchGlobalGoal();
     }
   }
 
